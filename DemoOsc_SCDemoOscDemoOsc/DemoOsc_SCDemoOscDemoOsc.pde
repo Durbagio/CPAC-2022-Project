@@ -47,12 +47,18 @@ void draw() {
   background(0);
   colorMode(RGB, 255);
   flock.run();
-  //print(flock.distanceMatrix());
   
-  OscMessage testMsg = new OscMessage("/markov"); 
-  flock.computeMsg(testMsg);
-  oscP5.send(testMsg, myRemoteLocation);
-  //testMsg.print(); // OSC out message
+  OscMessage MarkovMsg = new OscMessage("/markov");
+  OscMessage BPMMsg = new OscMessage("/BPM"); 
+  flock.computeMarkovMsg(MarkovMsg);
+  flock.computeBPMMsg(BPMMsg);
+  
+  oscP5.send(MarkovMsg, myRemoteLocation);
+  oscP5.send(BPMMsg, myRemoteLocation);
+  
+  MarkovMsg.print();
+  print("\n");
+  BPMMsg.print();
   print("\n");
   
 }

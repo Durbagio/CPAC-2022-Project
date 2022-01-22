@@ -54,18 +54,25 @@ class Flock {
     }
   }
 
-  void computeMsg(OscMessage m) {
+   void computeMarkovMsg(OscMessage m) {
     N = boids.size();
     for(int i = 0; i < N; i++)  {
-      float sum = 0;
+       float sum = 0;
        for(int j = 0; j < N; j++){
-       sum = sum + distances.get(i).get(j);
+       sum = sum + (tresh - min(tresh, distances.get(i).get(j)))/tresh;
       }
       for(int j = 0; j < N; j++){
-        float value =  distances.get(i).get(j);
-        if (sum > 0) m.add(value/sum);
-        else m.add(1.0);
+      
+        float value = (tresh - min(tresh, distances.get(i).get(j)))/tresh;
+        m.add(value/sum);
+        //m.add(1.0);
       }
     }
   }
+  
+  void computeBPMMsg(OscMessage m) {
+    N = boids.size();
+    float BPM = 10 * N;
+    m.add(BPM);
+    }
 }
