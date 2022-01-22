@@ -1,16 +1,16 @@
-//FIRST EXAMPLE: EACH PERSSON REPRESENTS ONE SINGLE SOUND
-//FIXED BPM
-//ONLY ONE OSC
+//FIRST EXAMPLE: EACH PERSON REPRESENTS ONE SINGLE SOUND
+//ONLY ONE OSCILLATOR
 
 
-
+(
 (
 ~n_boids = 1;
 ~current_state = 0;
 ~markov_matrix = [1];
 ~prob_vec = [1];
-)
+);
 
+/*
 //FUNCTION TO TURN VECTOR INTO SQUARE MATRIX (MARKOV MATRIX)
 (
 m = {
@@ -19,15 +19,22 @@ m = {
 	var matrix = [];
 	for (0, length-1, {
 		|i| matrix = matrix.add(in_vector[i*length..(i+1)*length-1]);
+		//postln(matrix[i]);
 	});
 	matrix;
 }
 
-)
+
+
+);
+*/
 
 
 //FUNCTION TO GET NEXT STATE
+
 (
+/*
+//from Markov Matrix
 n = {
 	|cur_state|
 	//we first compute the matrix  from prob_vec
@@ -37,7 +44,24 @@ n = {
 	postln("Probabilities for next state: "+probs);
 	(0..~n_boids-1).wchoose(probs);
 }
-)
+*/
+
+//from probability array (PROCESSING)
+n = {
+	|prob_vector|
+	~n_boids = prob_vector.size;
+	(0..~n_boids-1).wchoose(prob_vector);
+}
+
+);
+
+
+
+
+
+
+
+
 
 
 
@@ -47,43 +71,25 @@ OSCdef('OSCreceiver',
 		arg msg;
 
 		msg.removeAt(0);
-		//msg.postln;
+		("Probabilities: "+ msg).postln;
 		~prob_vec = msg;
-		~n_boids = sqrt(msg.size).asInteger;
+		~n_boids = msg.size.asInteger;
 
 		//function for next note based on current one
 
 
 	},
 	"/markov");
-)
 
+);
+
+
+c = NetAddr.new("127.0.0.1", 3000);
+
+)
 
 
 ///////////////
-
-
-//EX 0: Visualizing states and probabilities in post window
-(
-//var tempoclock = TempoClock(1);
-var initial_state = 0;
-var cur_state = initial_state;
-var next_state;
-a = {
-	inf.do {
-		postln("Current state: "+ cur_state);
-		next_state = n.value(cur_state);
-		postln("Next state"+ next_state);
-		1.0.wait;
-		cur_state = next_state;
-	};
-}.fork;
-)
-
-
-a.stop;
-
-
 
 
 
@@ -92,13 +98,28 @@ a.stop;
 e = Pbind(
 	\degree, Pfunc({
 		var next_state;
-		postln("Current state: "+ ~current_state);
-		next_state = n.value(~current_state);
-		postln("Next state"+ next_state);
+		TempoClock.tempo = ~n_boids;
+		postln("Initial state: "+ ~current_state);
+		next_state = n.value(~prob_vec);
+		postln("New state"+ next_state);
 		~current_state = next_state;
+		c.sendMsg("/clock", ~current_state);
 		next_state;
-	})
+	}
+	)
 ).play
 )
 
+
+(
+e = Pbind(
+	\degree, 0
+).play
+)
+
+
+~n_boids;
+
 e.stop;
+
+
