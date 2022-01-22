@@ -10,6 +10,7 @@ Flock flock;
 // for osc receive
 float face_x,face_y;
 boolean faceRecognitionActive = false;
+boolean SCComActive = true;
 
 float tresh = 200.0;
 
@@ -48,18 +49,6 @@ void draw() {
   colorMode(RGB, 255);
   flock.run();
   
-  OscMessage MarkovMsg = new OscMessage("/markov");
-  OscMessage BPMMsg = new OscMessage("/BPM"); 
-  flock.computeMarkovMsg(MarkovMsg);
-  flock.computeBPMMsg(BPMMsg);
-  
-  oscP5.send(MarkovMsg, myRemoteLocation);
-  oscP5.send(BPMMsg, myRemoteLocation);
-  
-  MarkovMsg.print();
-  print("\n");
-  BPMMsg.print();
-  print("\n");
   
 }
 
@@ -108,6 +97,22 @@ void oscEvent(OscMessage theOscMessage) {
     int python_webcam_dimension = 300;
     face_x = width-theOscMessage.get(0).floatValue()/python_webcam_dimension*width;
     face_y = theOscMessage.get(1).floatValue()/python_webcam_dimension*height;
-    print(" osc message " , face_x, face_y);
+    print("osc message from python" , face_x, face_y);
+   }
+   
+  if(theOscMessage.checkAddrPattern("/clock")==true) {
+    int currentState = theOscMessage.get(0).intValue();
+    SCComActive = true;
+    print("osc message from SC, current state: " , currentState);
+    
+    OscMessage MarkovMsg = new OscMessage("/markov");
+    //OscMessage BPMMsg = new OscMessage("/BPM"); 
+    flock.computeMarkovMsg(MarkovMsg, currentState);
+  
+    oscP5.send(MarkovMsg, myRemoteLocation);
+  
+    MarkovMsg.print();
+    print("\n");
+    
    }
 }

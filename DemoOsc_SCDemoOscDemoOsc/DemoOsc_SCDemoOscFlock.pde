@@ -54,25 +54,38 @@ class Flock {
     }
   }
 
-   void computeMarkovMsg(OscMessage m) {
+  void computeMarkovMsg(OscMessage m, int currentState) {
+    float[][] probMatrix;
+    float[] probs;
     N = boids.size();
+    probMatrix = new float [N][N];
     for(int i = 0; i < N; i++)  {
        float sum = 0;
        for(int j = 0; j < N; j++){
        sum = sum + (tresh - min(tresh, distances.get(i).get(j)))/tresh;
       }
       for(int j = 0; j < N; j++){
-      
         float value = (tresh - min(tresh, distances.get(i).get(j)))/tresh;
-        m.add(value/sum);
-        //m.add(1.0);
+        probMatrix[i][j] = value/sum;
+        //m.add(value/sum);
+        //m.add(probMatrix[i][j]);
       }
     }
+    
+    //We find the row of the current state and choose to next state based on its probabilites
+    probs = probMatrix[currentState];
+    for(int i = 0; i < probs.length; i++) {
+      m.add(probs[i]);
+    }
+    
+    
   }
   
+  /*
   void computeBPMMsg(OscMessage m) {
     N = boids.size();
     float BPM = 10 * N;
     m.add(BPM);
     }
+   */
 }
