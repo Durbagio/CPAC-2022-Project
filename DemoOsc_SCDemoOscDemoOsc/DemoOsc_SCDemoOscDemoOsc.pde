@@ -12,17 +12,17 @@ float face_x,face_y;
 boolean faceRecognitionActive = false;
 boolean SCComActive = true;
 
-float tresh = 200.0;
+float tresh = 150.0;
 
 void setup() {
-  size(640, 480);
+  size(1280,720);
   //fullScreen();
   flock = new Flock();
   float x, y;
   
   color c;
   PVector t;
-  for(group = 0 ;group < 1; group++){
+  for(group = 0 ;group < 4; group++){
     x = random(50, width-50);
     y = random(50, height-50);
     c = paletteGenerator();
@@ -54,8 +54,8 @@ void draw() {
 
 // Add a new boid into the System
 void mousePressed() {
-  //int count = poisson(4);
-  int count = 1;
+  int count = poisson(4);
+  //int count = 1;
   color c = paletteGenerator();
   float x = mouseX;
   float y = mouseY;
