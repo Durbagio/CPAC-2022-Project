@@ -1,3 +1,8 @@
+import ch.bildspur.postfx.builder.*;
+import ch.bildspur.postfx.pass.*;
+import ch.bildspur.postfx.*;
+PostFX fx;
+
 import oscP5.*;
 import netP5.*;
 
@@ -12,11 +17,15 @@ float face_x,face_y;
 boolean faceRecognitionActive = false;
 boolean SCComActive = true;
 
-float tresh = 150.0;
+float tresh = 500.0;
 
 void setup() {
-  size(1280,720);
-  //fullScreen();
+  //size(1280,720,P2D);
+  fullScreen(P2D);
+  fx = new PostFX(this);
+  fx.preload(BloomPass.class);
+  fx.preload(BlurPass.class);
+  
   flock = new Flock();
   float x, y;
   
@@ -49,7 +58,7 @@ void draw() {
   colorMode(RGB, 255);
   flock.run();
   
-  
+  fx.render().bloom(0.1, 100, 10).compose();
 }
 
 // Add a new boid into the System

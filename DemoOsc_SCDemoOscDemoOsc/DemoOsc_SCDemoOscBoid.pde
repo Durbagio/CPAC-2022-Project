@@ -103,12 +103,12 @@ class Boid {
     ellipse(position.x, position.y, r*mul, r*mul);
     //print(position.x,position.y); // added for debugging
     int i, count = 0;
-    float d;
+    float d, T=tresh/2;
     // distance for 0 to index
     for(i = 0; i < index; i++){
       d = dist.get(index).get(i);
-      if ((d > 0) && (d < tresh) && (count < maxCount)){
-        stroke(255, 255*pow((tresh-d)/tresh, 0.8));
+      if ((d > 0) && (d < T) && (count < maxCount)){
+        stroke(255, 255*pow((T-d)/T, 0.8));
         strokeWeight(1.5);
         line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
         count++;
@@ -117,8 +117,8 @@ class Boid {
     // distance for index to N
     for(i = boids.size()-1; i > index; i--){
       d = dist.get(index).get(i);
-      if ((d > 0) && (d < tresh) && (count < maxCount)){
-        stroke(255, 255*pow((tresh-d)/tresh, 0.8));
+      if ((d > 0) && (d < T) && (count < maxCount)){
+        stroke(255, 255*pow((T-d)/T, 0.8));
         strokeWeight(1.5);
         line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
         count++;

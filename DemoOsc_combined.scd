@@ -187,7 +187,7 @@ SynthDef.new(\PhaseMod, {
 	sig2 = Formant.ar(fund*3, f2, Rand(1,bw), 0.1, 0.0);
 	sig3 = Formant.ar(fund*4, f3, Rand(1,bw), 0.1, 0.0);
 	sig = sig1 + sig2 + sig3;
-	sig =  sig * EnvGen.kr(Env([0, 0.5, 0], [0.01, sustain]),doneAction: 2);
+	sig =  sig * EnvGen.kr(Env([0, 0.5, 0.5, 0], [0.01, sustain, 0.5]),doneAction: 2);
 
 	Out.ar([0,1], sig);
 	}).add;
@@ -220,7 +220,7 @@ e = Pbind(
 
 	\bw, Pfunc({
 
-		var bw = 10*~n_boids;
+		var bw = 10;
 
 		bw;
 	}),
@@ -258,7 +258,7 @@ e = Pbind(
 	}),
 
 	\sustain, Pfunc({
-		var dur = 1/~n_boids;
+		var dur = 1/LinLin.kr(~n_boids, 1, 200, 60/60, 180/60);
 		dur;
 	}), \instrument, \PhaseMod
 )
