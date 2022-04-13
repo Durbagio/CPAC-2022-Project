@@ -1,0 +1,24 @@
+#N canvas 44 25 896 782 12;
+#X obj 606 81 unpackOSC /markov;
+#X msg 6 111 connect 127.0.0.1 3000;
+#X obj 183 133 udpsend;
+#X obj 183 92 packOSC;
+#X msg 183 68 /clock 1;
+#X obj 183 44 metro 100;
+#X obj 183 20 tgl 15 0 empty empty empty 17 7 0 10 #fcfcfc #000000
+#000000 0 1;
+#X obj 606 108 routeOSC /markov;
+#X obj 606 132 print;
+#X obj 606 57 udpreceive 57120;
+#X text 5 62 Once Processing is running click on this message.;
+#X obj 183 -2 loadbang;
+#X text 651 133 cmd+R;
+#X connect 0 0 7 0;
+#X connect 1 0 2 0;
+#X connect 3 0 2 0;
+#X connect 4 0 3 0;
+#X connect 5 0 4 0;
+#X connect 6 0 5 0;
+#X connect 7 0 8 0;
+#X connect 9 0 0 0;
+#X connect 11 0 6 0;
