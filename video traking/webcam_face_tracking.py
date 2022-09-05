@@ -23,7 +23,9 @@ ensure_packages_installed(['cv2'])
 """
 
 logger = setup_logger(__name__, 'DEBUG', is_main=True)
-os.chdir('C:/Users/Luca Gobbato/Documents/GitHub/motpy')
+# os.chdir('C:/Users/Luca Gobbato/Documents/GitHub/motpy')
+os.chdir('C:/Users/Luca Gobbato/Documents/GitHub/CPAC-2022-Project/video traking')
+
 
 WEIGHTS_URL = 'https://github.com/opencv/opencv_3rdparty/raw/dnn_samples_face_detector_20170830/res10_300x300_ssd_iter_140000.caffemodel'
 WEIGHTS_PATH = './Models/face_detection/opencv_face_detector.caffemodel'
