@@ -1,9 +1,11 @@
 import os
+from turtle import width
 # this line suppresses errors multiple OpenMP, but does not work
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 import time
 from typing import Sequence
 
+import pafy
 import cv2
 import fire
 import numpy as np
@@ -15,6 +17,9 @@ from motpy.core import setup_logger
 from motpy.detector import BaseObjectDetector
 from motpy.testing_viz import draw_detection, draw_track
 from motpy.utils import ensure_packages_installed
+
+from pythonosc import udp_client
+from numpy import mean
 
 from coco_labels import get_class_ids
 
@@ -35,12 +40,20 @@ ensure_packages_installed(['torch', 'torchvision', 'cv2'])
 python ./webcam_person_traking_2.py    --video_path='../CPAC-2022-Project/video traking/video examples/PETS09-S2L1-raw.webm'  --detect_labels=["person"]  --tracker_min_iou=0.2  --architecture=fasterrcnn  --device=cpu
 """
 
-# video_path = './video examples/PETS09-S2L1-raw.webm'
-video_path = './video examples/PETS09-S2L2-raw.webm'
+video_path = './video examples/PETS09-S2L1-raw.webm'
+# video_path = './video examples/PETS09-S2L2-raw.webm'
 # video_path = './video examples/AVG-TownCentre-raw.webm'
 # video_path = './video examples/MOT20-06-raw.webm'
 # video_path = '' # uncomment to activate webcam input
+video_path = "https://www.youtube.com/watch?v=1-iS7LArMPA" # NY
+video_path = "https://www.youtube.com/watch?v=z4WeAR7tctA" # NY live walking
+video_path = "https://www.youtube.com/watch?v=h1wly909BYw" # Petersburg - ok
+# video_path = "https://www.youtube.com/watch?v=PGrq-2mju2s" # time square
 
+
+IP = '127.0.0.1'
+# PORT = 57120 # supercollider
+PORT = 3000  # processing
 
 logger = setup_logger(__name__, 'DEBUG', is_main=True)
 
@@ -115,21 +128,30 @@ class CocoObjectDetector(BaseObjectDetector):
 
 
 def read_video_file(video_path: str):
-    video_path = os.path.expanduser(video_path)
-    cap = cv2.VideoCapture(video_path)
-    video_fps = float(cap.get(cv2.CAP_PROP_FPS))
+    if "youtube" in video_path:
+        video = pafy.new(video_path)
+        best = video.getbest(preftype="mp4")
+        cap = cv2.VideoCapture(best.url)
+        video_fps = 25
+    else:
+        video_path = os.path.expanduser(video_path)
+        cap = cv2.VideoCapture(video_path)
+        video_fps = float(cap.get(cv2.CAP_PROP_FPS))
     return cap, video_fps
 
-def center(boxArray):
+def center(boxArray, imgHeight, imgWidth):
     # [xmin, ymin, xmax, ymax]
-    return [mean(boxArray[0:2:2]) , mean(boxArray[1:2:3])]
+    # print(boxArray.shape, boxArray[1:2])
+    # print(boxArray,boxArray[0])
+    # return [mean(boxArray[0:2:3])/imgWidth, mean(boxArray[1:2:3])/imgHeight]
+    return [ ((boxArray[0]+boxArray[2])/2)/imgWidth, ((boxArray[1]+boxArray[3])/2)/imgHeight]
 
 
 def run(video_path: str = video_path, detect_labels = ["person"],
         video_downscale: float = 1.,
-        architecture: str = 'fcos',
-        confidence_threshold: float = 0.5,
-        tracker_min_iou: float = 0.25,
+        architecture: str = 'fasterrcnnMob',
+        confidence_threshold: float = 0.7,
+        tracker_min_iou: float = 0.35,
         show_detections: bool = True,
         track_text_verbose: int = 0,
         device: str = 'cuda',
@@ -160,10 +182,19 @@ def run(video_path: str = video_path, detect_labels = ["person"],
                             # 'multi_match_min_iou': 0.93})
                             'multi_match_min_iou': 1. + 1e-7})
 
+    # udp client for sending OSC messages
+    client = udp_client.SimpleUDPClient(IP, PORT)
 
+    ordered_ids = [''];
+    new_ids = [''];
 
     while True:
         ret, frame = cap.read()
+        imgHeight, imgWidth, _ = frame.shape
+        # frame = frame[1:round(imgHeight*0.5), 1:round(imgWidth*0.5)] # crop image
+        # frame = frame[round(imgHeight*0.5):round(imgHeight), round(imgWidth*0.25):round(imgWidth*0.75)] # crop image
+        imgHeight, imgWidth, _ = frame.shape
+
         if not ret:
             break
 
@@ -180,10 +211,40 @@ def run(video_path: str = video_path, detect_labels = ["person"],
         if show_detections:
             for det in detections:
                 draw_detection(frame, det)
+                # sending osc data
+                # x,y = center(det.box,imgHeight,imgWidth)
+                # client.send_message('/position', [x, y])
 
         for track in active_tracks:
             # draw_track(frame, track, thickness=2, text_at_bottom=True, text_verbose=track_text_verbose)
             draw_track(frame, track, thickness=2)
+
+        # sort new and old ids, assigning a small positive number (their position in the ordered_ids list)
+        new_ids = [track.id for track in active_tracks]
+        ordered_ids = [ id if id in new_ids else '' for id in ordered_ids] # set '' to disappeared boxes (id)
+        for id in new_ids:
+            if id not in ordered_ids:
+                if ordered_ids.count('') > 0:
+                    ordered_ids[ordered_ids.index('')] = id
+                else:
+                    ordered_ids.append(id)
+
+        # print(type(detections[1].box))
+        # attr = [center(det.box,imgHeight,imgWidth) for det in detections]
+        # directly produce a 1D array [x1, y1, x2, y2, ...]
+        attr = [xy for det in detections for xy in center(det.box,imgHeight,imgWidth)]
+
+        # print(attr)
+        # attr = np.array(attr).reshape([-1,2]) # reshape to a matrix
+        client.send_message('/matrix', [len(attr)] + attr )
+        # print('attr')
+        # print(type([at for at in attr]))
+        # print([at for at in attr])
+
+        # todo: devo trattare active_tracks, non detection
+        # attr = [xy for det in active_tracks for xy in center(det.box,imgHeight,imgWidth)]
+        # print([track.id for track in active_tracks])
+
 
         cv2.imshow('frame', frame)
         c = cv2.waitKey(viz_wait_ms)
