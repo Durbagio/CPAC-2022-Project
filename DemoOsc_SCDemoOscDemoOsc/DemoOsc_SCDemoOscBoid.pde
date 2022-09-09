@@ -15,30 +15,30 @@ class Boid {
   PVector target;
   float humanization;
 
-    Boid(float x, float y, int g, color c, PVector t) {
+  Boid(float x, float y, int g, color c, PVector t) {
     acceleration = new PVector(0, 0);
 
     float angle = random(TWO_PI);
     velocity = new PVector(cos(angle), sin(angle));
 
     position = new PVector(x, y);
-    
+
     r = 1.0;
-    
+
     maxspeed = 0.3;
     maxforce = 0.008;
-    
+
     group = g;
     groupColor = c;
-    
+
     target = t;
-    
-    humanization = random(0.5,1.5);
+
+    humanization = random(0.5, 1.5);
   }
 
   void run(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
-    flock(boids, dist);
-    update();
+    flock(boids, dist); // compute force
+    update();           // move boid
     borders();
     render(boids, dist);
   }
@@ -49,7 +49,7 @@ class Boid {
   }
 
   // We accumulate a new acceleration each time based on three rules
-  void flock(ArrayList<Boid> boids,  ArrayList<ArrayList<Float>> dist) {
+  void flock(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
     PVector sep = separate(boids, dist);   // Separation
     PVector ali = align(boids, dist);      // Alignment
     PVector coh = cohesion(boids, dist);   // Cohesion
@@ -78,7 +78,7 @@ class Boid {
   }
 
   // A method that calculates and applies a steering force towards a target
-  // STEER = DESIRED MINUS VELOCITY
+  // STEER = DESIRED - VELOCITY
   PVector seek(PVector target) {
     PVector desired = PVector.sub(target, position);  // A vector pointing from the position to the target
     // Scale to maximum speed
@@ -91,23 +91,23 @@ class Boid {
     return steer;
   }
 
-  void render(ArrayList<Boid> boids,  ArrayList<ArrayList<Float>> dist) {
+  void render(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
     stroke(255);
     fill(255);
     int mul = 3;
-    if(group==0){ // cange appearance for the human point
-       stroke(#ffcc00);
-       fill(#ffcc00);
-       mul = 6;
+    if (group==0) { // cange appearance for the human point
+      stroke(#ffcc00);
+      fill(#ffcc00);
+      mul = 6;
     }
     ellipse(position.x, position.y, r*mul, r*mul);
     //print(position.x,position.y); // added for debugging
     int i, count = 0;
     float d, T=tresh/2;
     // distance for 0 to index
-    for(i = 0; i < index; i++){
+    for (i = 0; i < index; i++) {
       d = dist.get(index).get(i);
-      if ((d > 0) && (d < T) && (count < maxCount)){
+      if ((d > 0) && (d < T) && (count < maxCount)) {
         stroke(255, 255*pow((T-d)/T, 0.8));
         strokeWeight(1.5);
         line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
@@ -115,9 +115,9 @@ class Boid {
       }
     }
     // distance for index to N
-    for(i = boids.size()-1; i > index; i--){
+    for (i = boids.size()-1; i > index; i--) {
       d = dist.get(index).get(i);
-      if ((d > 0) && (d < T) && (count < maxCount)){
+      if ((d > 0) && (d < T) && (count < maxCount)) {
         stroke(255, 255*pow((T-d)/T, 0.8));
         strokeWeight(1.5);
         line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
@@ -133,7 +133,7 @@ class Boid {
   //  if (position.x > width+r) position.x = -r;
   //  if (position.y > height+r) position.y = -r;
   //}
-  
+
   //Reflect
   void borders() {
     if (position.x < -r*2) velocity.x = -velocity.x;
@@ -144,13 +144,13 @@ class Boid {
 
   // Separation
   // Method checks for nearby boids and steers away
-  PVector separate (ArrayList<Boid> boids,  ArrayList<ArrayList<Float>> dist) {
+  PVector separate (ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
     float desiredseparation = 30.0f, d;
     PVector steer = new PVector(0, 0, 0);
     int count = 0, i;
     // For every boid in the system, check if it's too close
     // distance for 0 to index
-    for(i = 0; i < index; i++){
+    for (i = 0; i < index; i++) {
       d = dist.get(index).get(i);
       if ((d > 0) && (d < desiredseparation)) {
         // Calculate vector pointing away from neighbor
@@ -162,7 +162,7 @@ class Boid {
       }
     }
     // distance for index to N
-    for(i = boids.size()-1; i > index; i--){
+    for (i = boids.size()-1; i > index; i--) {
       d = dist.get(index).get(i);
       if ((d > 0) && (d < desiredseparation)) {
         // Calculate vector pointing away from neighbor
@@ -192,13 +192,13 @@ class Boid {
 
   // Alignment
   // For every nearby boid in the system, calculate the average velocity
-  PVector align (ArrayList<Boid> boids,  ArrayList<ArrayList<Float>> dist) {
+  PVector align (ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
     PVector sum = new PVector(0, 0);
     int count = 0, i;
     float d;
     // Check distance from other boids
     // distance for 0 to index
-    for(i = 0; i < index; i++){
+    for (i = 0; i < index; i++) {
       d = dist.get(index).get(i);
       if ((d > 0) && (group == boids.get(i).group)) {
         sum.add(boids.get(i).velocity);
@@ -206,7 +206,7 @@ class Boid {
       }
     }
     // distance for index to N
-    for(i = boids.size()-1; i > index; i--){
+    for (i = boids.size()-1; i > index; i--) {
       d = dist.get(index).get(i);
       if ((d > 0) && (group == boids.get(i).group)) {
         sum.add(boids.get(i).velocity);
@@ -221,21 +221,20 @@ class Boid {
       PVector steer = PVector.sub(sum, velocity);
       steer.limit(maxforce);
       return steer;
-    } 
-    else {
+    } else {
       return new PVector(0, 0);
     }
   }
 
   // Cohesion
   // For the average position (i.e. center) of all nearby boids, calculate steering vector towards that position
-  PVector cohesion (ArrayList<Boid> boids,  ArrayList<ArrayList<Float>> dist) {
+  PVector cohesion (ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
     PVector sum = new PVector(0, 0);   // Start with empty vector to accumulate all positions
     int count = 0, i;
     float d;
     // Check distance from other boids
     // distance for 0 to index
-    for(i = 0; i < index; i++){
+    for (i = 0; i < index; i++) {
       d = dist.get(index).get(i);
       if ((d > 0) && (group == boids.get(i).group)) {
         sum.add(boids.get(i).position);
@@ -243,7 +242,7 @@ class Boid {
       }
     }
     // distance for index to N
-    for(i = boids.size()-1; i > index; i--){
+    for (i = boids.size()-1; i > index; i--) {
       d = dist.get(index).get(i);
       if ((d > 0) && (group == boids.get(i).group)) {
         sum.add(boids.get(i).position);
@@ -253,26 +252,42 @@ class Boid {
     if (count > 0) {
       sum.div(count);
       return seek(sum);  // Steer towards the position
-    } 
-    else {
+    } else {
       return new PVector(0, 0);
     }
   }
-    
+
   // Target
   // For the group target position, calculate steering vector towards that position
   PVector walker() {
+    if (!faceRecognitionActive) {
+      move_target();
+    }
     PVector steer = seek(target);
     steer.normalize();
     steer.mult(maxspeed);
     steer.sub(velocity);
     steer.limit(maxforce);
+    return steer;
+  }
+
+  // randomly move target
+  void move_target() {
     target.x = target.x + random(-step, step);
     target.y = target.y + random(-step, step);
     if (target.x < -r*2) target.x = width+r*2;
     if (target.y < -r*2) target.y = height+r*2;
     if (target.x > width+r*2) target.x = -r*2;
     if (target.y > height+r*2) target.y = -r*2;
-    return steer;
+  }
+
+  // overload the function to move target in desired position
+  void move_target(float x, float y) {
+    target.x = x;
+    target.y = y;
+  }
+  void move_target(float[] xy) {
+    target.x = xy[0];
+    target.y = xy[1];
   }
 }

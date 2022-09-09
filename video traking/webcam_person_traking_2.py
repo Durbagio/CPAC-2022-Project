@@ -48,12 +48,13 @@ video_path = './video examples/PETS09-S2L1-raw.webm'
 video_path = "https://www.youtube.com/watch?v=1-iS7LArMPA" # NY
 video_path = "https://www.youtube.com/watch?v=z4WeAR7tctA" # NY live walking
 video_path = "https://www.youtube.com/watch?v=h1wly909BYw" # Petersburg - ok
-# video_path = "https://www.youtube.com/watch?v=PGrq-2mju2s" # time square
+video_path = "https://www.youtube.com/watch?v=PGrq-2mju2s" # time square
 
 
 IP = '127.0.0.1'
 # PORT = 57120 # supercollider
 PORT = 3000  # processing
+
 
 logger = setup_logger(__name__, 'DEBUG', is_main=True)
 
@@ -139,12 +140,17 @@ def read_video_file(video_path: str):
         video_fps = float(cap.get(cv2.CAP_PROP_FPS))
     return cap, video_fps
 
-def center(boxArray, imgHeight, imgWidth):
+# def center(boxArray, imgHeight, imgWidth):
+def center(boxArray):
     # [xmin, ymin, xmax, ymax]
     # print(boxArray.shape, boxArray[1:2])
     # print(boxArray,boxArray[0])
     # return [mean(boxArray[0:2:3])/imgWidth, mean(boxArray[1:2:3])/imgHeight]
     return [ ((boxArray[0]+boxArray[2])/2)/imgWidth, ((boxArray[1]+boxArray[3])/2)/imgHeight]
+
+def osc_message_boid(track):
+    # prepare the osc message for a single track
+    return [ordered_ids.index(track.id)] + center(track.box)
 
 
 def run(video_path: str = video_path, detect_labels = ["person"],
@@ -185,11 +191,13 @@ def run(video_path: str = video_path, detect_labels = ["person"],
     # udp client for sending OSC messages
     client = udp_client.SimpleUDPClient(IP, PORT)
 
+    global ordered_ids, new_ids
     ordered_ids = [''];
     new_ids = [''];
 
     while True:
         ret, frame = cap.read()
+        global imgHeight, imgWidth
         imgHeight, imgWidth, _ = frame.shape
         # frame = frame[1:round(imgHeight*0.5), 1:round(imgWidth*0.5)] # crop image
         # frame = frame[round(imgHeight*0.5):round(imgHeight), round(imgWidth*0.25):round(imgWidth*0.75)] # crop image
@@ -229,22 +237,13 @@ def run(video_path: str = video_path, detect_labels = ["person"],
                 else:
                     ordered_ids.append(id)
 
-        # print(type(detections[1].box))
-        # attr = [center(det.box,imgHeight,imgWidth) for det in detections]
-        # directly produce a 1D array [x1, y1, x2, y2, ...]
-        attr = [xy for det in detections for xy in center(det.box,imgHeight,imgWidth)]
-
-        # print(attr)
-        # attr = np.array(attr).reshape([-1,2]) # reshape to a matrix
-        client.send_message('/matrix', [len(attr)] + attr )
-        # print('attr')
-        # print(type([at for at in attr]))
-        # print([at for at in attr])
-
-        # todo: devo trattare active_tracks, non detection
         # attr = [xy for det in active_tracks for xy in center(det.box,imgHeight,imgWidth)]
-        # print([track.id for track in active_tracks])
+        # client.send_message('/active_tracks', [len(attr)] + attr )
 
+        attr = [nxy for det in active_tracks for nxy in osc_message_boid(det)]
+        # [n1, x1, y1, n2, x2, y2, ...]
+        client.send_message('/active_tracks', [len(active_tracks)] + attr )
+        # print([len(active_tracks)] + attr)
 
         cv2.imshow('frame', frame)
         c = cv2.waitKey(viz_wait_ms)
