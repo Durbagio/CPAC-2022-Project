@@ -1,5 +1,8 @@
 float step = 5.0; // random walker step
 int maxCount = 25;
+float  lifetime = 1; // seconds it will last
+float  time_to_life = 1; // time to get to full life
+
 // The Boid class
 
 class Boid {
@@ -14,6 +17,9 @@ class Boid {
   color groupColor;
   PVector target;
   float humanization;
+  float life;
+  float lifetime;
+  boolean is_active;
 
   Boid(float x, float y, int g, color c, PVector t) {
     acceleration = new PVector(0, 0);
@@ -25,15 +31,19 @@ class Boid {
 
     r = 1.0;
 
-    maxspeed = 0.3;
-    maxforce = 0.008;
+    maxspeed = 3; // 0.3;
+    maxforce = 0.1; // 0.008;
 
     group = g;
     groupColor = c;
 
     target = t;
 
-    humanization = random(0.5, 1.5);
+    humanization = random(0.5, 1.5); // todo: keep humanization?
+    humanization = 1;
+
+    life = 1;
+    is_active = true;
   }
 
   void run(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
@@ -60,9 +70,9 @@ class Boid {
     coh.mult(2.0*humanization);
     walk.mult(3.0*humanization);
     // Add the force vectors to acceleration
-    applyForce(sep);
-    applyForce(ali);
-    applyForce(coh);
+    //applyForce(sep); // todo: maybe remove those behaviours
+    //applyForce(ali);
+    //applyForce(coh);
     applyForce(walk);
   }
 
@@ -75,6 +85,12 @@ class Boid {
     position.add(velocity);
     // Reset accelertion to 0 each cycle
     acceleration.mult(0);
+
+    if (is_active) {
+      increase_life();
+    } else {
+      decrease_life();
+    }
   }
 
   // A method that calculates and applies a steering force towards a target
@@ -92,37 +108,54 @@ class Boid {
   }
 
   void render(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
-    stroke(255);
-    fill(255);
+    stroke(255, 255*life);
+    fill(255, 255*life);
     int mul = 3;
-    if (group==0) { // cange appearance for the human point
-      stroke(#ffcc00);
-      fill(#ffcc00);
+    if (group==0 && ( manual_control  || faceRecognitionActive )) { // cange appearance for the human point
+      stroke(#ffcc00, 255*life);
+      fill(#ffcc00, 255*life);
       mul = 6;
     }
     ellipse(position.x, position.y, r*mul, r*mul);
+    if (render_target>0) renderTarget();
     //print(position.x,position.y); // added for debugging
     int i, count = 0;
-    float d, T=tresh/2;
+    float d, T=tresh/2; // todo: maybe reduce the treshold
     // distance for 0 to index
     for (i = 0; i < index; i++) {
+      float other_life = boids.get(i).life;
       d = dist.get(index).get(i);
       if ((d > 0) && (d < T) && (count < maxCount)) {
-        stroke(255, 255*pow((T-d)/T, 0.8));
+        stroke(255, 255*pow((T-d)/T, 0.8)*min(life, other_life));
         strokeWeight(1.5);
         line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
         count++;
       }
     }
     // distance for index to N
-    for (i = boids.size()-1; i > index; i--) {
-      d = dist.get(index).get(i);
-      if ((d > 0) && (d < T) && (count < maxCount)) {
-        stroke(255, 255*pow((T-d)/T, 0.8));
-        strokeWeight(1.5);
-        line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
-        count++;
+    // not necessary: it print double each line.. result is brighter lines (press x to toggle)
+    if (double_draw) {
+      for (i = boids.size()-1; i > index; i--) {
+        d = dist.get(index).get(i);
+        float other_life = boids.get(i).life;
+        if ((d > 0) && (d < T) && (count < maxCount)) {
+          stroke(255, 255*pow((T-d)/T, 0.8)*min(life, other_life));
+          strokeWeight(1.5);
+          line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
+          count++;
+        }
       }
+    }
+  }
+
+  // for developing/debugging
+  void renderTarget() {
+    stroke(#ff0000, 255*pow(life, 1));
+    fill(#ff0000, 255*life);
+    ellipse(target.x, target.y, r*2, r*2);
+    if ( render_target == 2) {
+      // kind of verbosity of the target printing
+      line(position.x, position.y, target.x, target.y);
     }
   }
 
@@ -260,7 +293,7 @@ class Boid {
   // Target
   // For the group target position, calculate steering vector towards that position
   PVector walker() {
-    if (!faceRecognitionActive) {
+    if (!multiObjectTrackingActive && !faceRecognitionActive) {
       move_target();
     }
     PVector steer = seek(target);
@@ -282,12 +315,21 @@ class Boid {
   }
 
   // overload the function to move target in desired position
-  void move_target(float x, float y) {
+  void set_target(float x, float y) {
     target.x = x;
     target.y = y;
   }
-  void move_target(float[] xy) {
+  void set_target(float[] xy) {
     target.x = xy[0];
     target.y = xy[1];
+  }
+
+  void decrease_life() {
+    life = max(life - 1/frameRate/lifetime, 0);
+  }
+
+  void increase_life() {
+    life = min(1, pow(life + 1/frameRate/time_to_life, 1)); // power 1 linear increment
+    //life = min(1, pow(life + 0.1, 1)); // todo remove: for debugging
   }
 }

@@ -11,6 +11,13 @@ class Flock {
   }
 
   void run() {
+    if (manual_control || faceRecognitionActive) {
+      if (manual_control) {
+        boids.get(0).target = new PVector(mouseX, mouseY);
+      } else {
+        boids.get(0).position = new PVector(face_x, face_y);
+      }
+    }
     // calculate the distance triangular matrix
     N = boids.size();
     for (int i = 0; i < N; i++) {
@@ -29,12 +36,13 @@ class Flock {
     }
     // Passing the entire list of boids to each boid individually
     for (Boid b : boids) {
-      if (b.group!=0) {
-        b.run(boids, distances);
-      } else { // human point is controlled by the detected face position
-        b.position = new PVector(face_x, face_y);
-        b.render(boids, distances);
-      }
+      b.run(boids, distances);
+    //  if (b.group!=0) {
+    //    b.run(boids, distances);
+    //  } else { 
+    //    // human point is controlled by the detected face position
+    //    b.render(boids, distances);
+    //  }
     }
   }
 
@@ -82,21 +90,26 @@ class Flock {
   void move_group_target(int group, float x, float y) {
     for (Boid b : boids) {
       if (b.group == group) {
-        b.move_target(x, y);
+        b.set_target(x, y);
       }
     }
   }
- 
-  void move_targets(ArrayList<Integer> groups, ArrayList<float[]> xy_list) {
+
+  void move_targets(ArrayList<Integer> groups, ArrayList<float[]> xy_list, ArrayList<Boolean> is_new_id) {
     // update all current existing boids:
     ArrayList<Integer> existing_groups = new ArrayList<Integer>();
     for (Boid b : boids) {
       existing_groups.add(b.group);
       if ( groups.contains(b.group) ) {
-        b.move_target( xy_list.get(groups.indexOf(b.group)) );
+        b.set_target( xy_list.get(groups.indexOf(b.group)) );
+        b.is_active = true;
+        if ( is_new_id.get(groups.indexOf(b.group)) ){
+          b.life = 0; // to fade in effect
+          // for faster convergence change also the position... maybe remove for smoother effect.
+          b.position = ( new PVector( xy_list.get(groups.indexOf(b.group))[0], xy_list.get(groups.indexOf(b.group))[1] ));
+        }
       } else {
-        // todo:
-        // start decreasing the life of the boid (fade away)
+        b.is_active = false;
       }
     }
 
@@ -109,12 +122,11 @@ class Flock {
         addBoid(new Boid(x, y, g, paletteGenerator(), target));
       }
     }
-    print(boids.size());
   }
 
   // move all boids to a random position
-  void randomize(){
-    for ( Boid b : boids ){
+  void randomize() {
+    for ( Boid b : boids ) {
       PVector position = new PVector(random(0, width), random(0, height));
       b.position = position;
     }

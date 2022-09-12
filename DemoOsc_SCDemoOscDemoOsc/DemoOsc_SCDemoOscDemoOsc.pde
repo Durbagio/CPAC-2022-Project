@@ -15,7 +15,13 @@ Flock flock;
 // osc receive
 float face_x, face_y;
 boolean faceRecognitionActive = false;
+boolean multiObjectTrackingActive = false;
+boolean manual_control = false;
 boolean SCComActive = true;
+boolean double_draw = false;
+boolean kill = false;
+int render_target = 0;
+
 
 float tresh = 500.0;
 
@@ -48,11 +54,6 @@ void setup() {
 }
 
 void draw() {
-  if (!faceRecognitionActive) {  // manually control first boid if no face tracking is present
-    face_x = mouseX;
-    face_y = mouseY;
-  }
-
   background(0);
   colorMode(RGB, 255);
   flock.run();
@@ -76,6 +77,8 @@ void mousePressed() {
     print(flock.boids.size()+"\n");
     group++;
   } else {
+    // restart
+    // throw away all boids and create only one
     flock = new Flock();
     group = 0;
     color c = paletteGenerator();
@@ -83,36 +86,56 @@ void mousePressed() {
     t = new PVector(random(0, width), random(0, height));
     flock.addBoid(new Boid(mouseX, mouseY, group, c, t));
     group++;
+
+    faceRecognitionActive = false;
+    manual_control = false;
+    multiObjectTrackingActive = false;
   }
 }
 
 void keyPressed() {
-  if (key == 'r') {
+  switch(key) {
+  case 'x':
+    double_draw = !double_draw;
+    break;
+  case 'm':
+    manual_control = !manual_control;
+    break;
+  case 'k':
+    kill = true;
+    break;
+  case 'r':
     flock.randomize();
-  } else {
-    for (Boid b : flock.boids) {
-      switch(key) {
-      case 'w':
-        b.maxspeed = b.maxspeed+0.05;
-        break;
-      case 'q':
-        b.maxspeed = b.maxspeed-0.05;
-        break;
-      case 'a':
-        b.maxforce = b.maxforce-0.008 * 0.05;
-        break;
-      case 's':
-        b.maxforce = b.maxforce+0.008 * 0.05;
-        break;
-      }
-    }
-    // print
-    if (key == 'p') {
-      print("\n\n");
-      print("\nmax force: ", flock.boids.get(0).maxforce);
-      print("\nmaxspeed:  ", flock.boids.get(0).maxspeed);
-      print("\n");
-      delay(500);
+    break;
+  case 't':
+    render_target = (render_target + 1) % 3;
+    break;
+  case 'p':
+    print("\n\n");
+    print("\nmax force: ", flock.boids.get(0).maxforce);
+    print("\nmaxspeed:  ", flock.boids.get(0).maxspeed);
+    print("\nmanual  :  ", manual_control);
+    print("\nframerate: ",frameRate);
+    print("\n");
+    delay(500);
+    break;
+  }
+
+  // keys that need iteration for each boids
+  for (Boid b : flock.boids) {
+    switch(key) {
+    case 'w':
+      b.maxspeed = flock.boids.get(0).maxspeed+0.05;
+      break;
+    case 'q':
+      b.maxspeed = flock.boids.get(0).maxspeed-0.05;
+      break;
+    case 'a':
+      b.maxforce = flock.boids.get(0).maxforce-0.008 * 0.05;
+      break;
+    case 's':
+      b.maxforce = flock.boids.get(0).maxforce+0.008 * 0.05;
+      break;
     }
   }
 }
@@ -143,29 +166,32 @@ int poisson(int mean) {
 void oscEvent(OscMessage theOscMessage) {
   if (theOscMessage.checkAddrPattern("/position")==true) {
     faceRecognitionActive = true;
-    int python_webcam_dimension = 1;
+    int python_webcam_dimension = 300;
     face_x = width-theOscMessage.get(0).floatValue()/python_webcam_dimension*width;
     face_y = theOscMessage.get(1).floatValue()/python_webcam_dimension*height;
     print("osc message from python", face_x, face_y);
   }
 
   if (theOscMessage.checkAddrPattern("/active_tracks")==true) { 
-    faceRecognitionActive = true;
+    multiObjectTrackingActive = true;
 
     int n_tracks = theOscMessage.get(0).intValue();
     ArrayList<Integer> groups_list = new ArrayList<Integer>();
+    ArrayList<Boolean> is_new_id = new ArrayList<Boolean>();
     ArrayList<float[]> xy_list = new ArrayList<float[]>();
 
+
     for (int i=0; i < n_tracks; i++) {
-      groups_list.add(theOscMessage.get(i*3+1).intValue());
-      float[] xy = {theOscMessage.get(i*3+2).floatValue() * width, theOscMessage.get(i*3+3).floatValue() * height};
+      groups_list.add(theOscMessage.get(i*4+1).intValue());
+      is_new_id.add(theOscMessage.get(i*4+2).intValue()==1);
+      float[] xy = {theOscMessage.get(i*4+3).floatValue() * width, theOscMessage.get(i*4+4).floatValue() * height};
       xy_list.add(xy);
     }
     // eventyually convert to array, but list is more convenient
     //Integer[] groups = new Integer[groups_list.size()];
     //groups = groups_list.toArray(groups);
 
-    flock.move_targets(groups_list, xy_list);
+    flock.move_targets(groups_list, xy_list, is_new_id);
   }
 
   if (theOscMessage.checkAddrPattern("/clock")==true) {
@@ -174,7 +200,7 @@ void oscEvent(OscMessage theOscMessage) {
     print("osc message from SC, current state: ", currentState);
 
     OscMessage MarkovMsg = new OscMessage("/markov");
-    //OscMessage BPMMsg = new OscMessage("/BPM"); 
+    //OscMessage BPMMsg = new OscMessage("/BPM");
     flock.computeMarkovMsg(MarkovMsg, currentState);
 
     oscP5.send(MarkovMsg, myRemoteLocation);
