@@ -18,8 +18,8 @@ class Boid {
   PVector target;
   float humanization;
   float life;
-  float lifetime;
   boolean is_active;
+  boolean is_fixed;
 
   Boid(float x, float y, int g, color c, PVector t) {
     acceleration = new PVector(0, 0);
@@ -44,6 +44,14 @@ class Boid {
 
     life = 1;
     is_active = true;
+    
+    is_fixed = false;
+    
+  }
+
+  // overload contructor
+  Boid(int group) {
+    this(mouseX, mouseY, group, paletteGenerator(), new PVector(mouseX, mouseY));
   }
 
   void run(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
@@ -98,8 +106,14 @@ class Boid {
   PVector seek(PVector target) {
     PVector desired = PVector.sub(target, position);  // A vector pointing from the position to the target
     // Scale to maximum speed
+    float d = desired.mag();
     desired.normalize();
+
     desired.mult(maxspeed);
+    if ( d < 60 ) {
+      // avoid overshoot: reduce the force when arriving near to the target
+      desired.mult(pow(map(d, 0, 100, 0, 1), 1.2));
+    }
 
     // Steering = Desired minus Velocity
     PVector steer = PVector.sub(desired, velocity);
@@ -112,15 +126,15 @@ class Boid {
     fill(255, 255*life);
     int mul = 3;
     if (group==0 && ( manual_control  || faceRecognitionActive )) { // cange appearance for the human point
-      stroke(#ffcc00, 255*life);
-      fill(#ffcc00, 255*life);
+      stroke(#ffcc00, 255*pow(life, 0.8));
+      fill(#ffcc00, 255*pow(life, 0.8));
       mul = 6;
     }
     ellipse(position.x, position.y, r*mul, r*mul);
     if (render_target>0) renderTarget();
     //print(position.x,position.y); // added for debugging
     int i, count = 0;
-    float d, T=tresh/2; // todo: maybe reduce the treshold
+    float d, T=tresh; // todo: maybe reduce the treshold
     // distance for 0 to index
     for (i = 0; i < index; i++) {
       float other_life = boids.get(i).life;
@@ -293,7 +307,7 @@ class Boid {
   // Target
   // For the group target position, calculate steering vector towards that position
   PVector walker() {
-    if (!multiObjectTrackingActive && !faceRecognitionActive) {
+    if (!is_fixed || !multiObjectTrackingActive) {
       move_target();
     }
     PVector steer = seek(target);

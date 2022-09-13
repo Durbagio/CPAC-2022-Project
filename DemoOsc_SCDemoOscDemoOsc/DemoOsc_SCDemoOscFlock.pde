@@ -10,9 +10,12 @@ class Flock {
     distances = new ArrayList<ArrayList<Float>>();
   }
 
-  void run() {
+  synchronized void run() {
     if (manual_control || faceRecognitionActive) {
       if (manual_control) {
+        for (Boid b : boids) {
+          if (b.group == 100) b.run(boids, distances); // skip computation for dead boids: todo: improve
+        }
         boids.get(0).target = new PVector(mouseX, mouseY);
       } else {
         boids.get(0).position = new PVector(face_x, face_y);
@@ -36,17 +39,18 @@ class Flock {
     }
     // Passing the entire list of boids to each boid individually
     for (Boid b : boids) {
-      b.run(boids, distances);
-    //  if (b.group!=0) {
-    //    b.run(boids, distances);
-    //  } else { 
-    //    // human point is controlled by the detected face position
-    //    b.render(boids, distances);
-    //  }
+      if (b.life > 0) b.run(boids, distances); // skip computation for dead boids: todo: improve
     }
+
+    //for (int i = N-1; i > 0; i--) {
+    //  // leave at least one boid
+    //  if (boids.get(i).life == 0 )  removeBoid(i);
+    //}
   }
 
-  void addBoid(Boid b) {
+
+  synchronized void addBoid(Boid b) {
+    //print(flock);
     // add the new boid to the list
     b.index = boids.size();
     boids.add(b);
@@ -59,6 +63,25 @@ class Flock {
     distances.add(column);
     for (int i = 0; i < N-1; i++) {
       distances.get(i).add(0.0);
+    }
+  }
+
+  // overload function for simplicity
+  void addDeadBoid(PVector position) {
+    group = 0;
+    color c = paletteGenerator();
+    Boid b = new Boid(position.x, position.y, group, c, position);
+    b.is_active = false;
+    addBoid(b);
+  }
+
+  synchronized void removeBoid(int index) {
+    //int N_old = boids.size();
+    boids.remove(index);
+    // update the distances matrix dimensions
+    distances.remove(index); // remove last row
+    for (ArrayList<Float> row : distances) { // remove last colum (each entry of row)
+      row.remove(index);
     }
   }
 
@@ -95,6 +118,7 @@ class Flock {
     }
   }
 
+  // this function is executed each time an OscMessage is received from python
   void move_targets(ArrayList<Integer> groups, ArrayList<float[]> xy_list, ArrayList<Boolean> is_new_id) {
     // update all current existing boids:
     ArrayList<Integer> existing_groups = new ArrayList<Integer>();
@@ -103,8 +127,10 @@ class Flock {
       if ( groups.contains(b.group) ) {
         b.set_target( xy_list.get(groups.indexOf(b.group)) );
         b.is_active = true;
-        if ( is_new_id.get(groups.indexOf(b.group)) ){
-          b.life = 0; // to fade in effect
+        if ( is_new_id.get(groups.indexOf(b.group)) ) {
+          //addDeadBoid(b.position); // for fade out effect
+          // fade in effect, for the boid in the new position
+          b.life = 1e-4; // eps
           // for faster convergence change also the position... maybe remove for smoother effect.
           b.position = ( new PVector( xy_list.get(groups.indexOf(b.group))[0], xy_list.get(groups.indexOf(b.group))[1] ));
         }
@@ -116,9 +142,9 @@ class Flock {
     // create new boids if necessary
     for (int g : groups) {
       if ( !existing_groups.contains(g) ) {
-        PVector target = new PVector(  );
         float x = xy_list.get(groups.indexOf(g))[0];
         float y = xy_list.get(groups.indexOf(g))[1];
+        PVector target = new PVector( x, y );
         addBoid(new Boid(x, y, g, paletteGenerator(), target));
       }
     }

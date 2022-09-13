@@ -99,10 +99,10 @@ void keyPressed() {
     double_draw = !double_draw;
     break;
   case 'm':
+    //for (Boid b : flock.boids) { // todo: fare cose
+    //  float d = PVector.dist(boids.get(i).position, boids.get(j).position); // skip computation for dead boids: todo: improve
+    //}
     manual_control = !manual_control;
-    break;
-  case 'k':
-    kill = true;
     break;
   case 'r':
     flock.randomize();
@@ -115,9 +115,18 @@ void keyPressed() {
     print("\nmax force: ", flock.boids.get(0).maxforce);
     print("\nmaxspeed:  ", flock.boids.get(0).maxspeed);
     print("\nmanual  :  ", manual_control);
-    print("\nframerate: ",frameRate);
+    print("\nframerate: ", frameRate);
+    print("\nflocksize: ", flock.boids.size());
     print("\n");
     delay(500);
+    break;
+  case 'f':
+    group = max(200,group+1); // just set an offset to avoid interference with other boids 
+    multiObjectTrackingActive = true; // just to freeze boids
+    group = 0;
+    Boid b = new Boid(0);
+    b.is_fixed = true;
+    flock.addBoid(b);
     break;
   }
 
@@ -125,16 +134,19 @@ void keyPressed() {
   for (Boid b : flock.boids) {
     switch(key) {
     case 'w':
-      b.maxspeed = flock.boids.get(0).maxspeed+0.05;
+      b.maxspeed = flock.boids.get(0).maxspeed+0.25;
       break;
     case 'q':
-      b.maxspeed = flock.boids.get(0).maxspeed-0.05;
+      b.maxspeed = flock.boids.get(0).maxspeed-0.25;
       break;
     case 'a':
-      b.maxforce = flock.boids.get(0).maxforce-0.008 * 0.05;
+      b.maxforce = flock.boids.get(0).maxforce-0.008 * 0.3;
       break;
     case 's':
-      b.maxforce = flock.boids.get(0).maxforce+0.008 * 0.05;
+      b.maxforce = flock.boids.get(0).maxforce+0.008 * 0.3;
+      break;
+    case 'k': // kill
+      b.is_active = false;
       break;
     }
   }
@@ -172,6 +184,11 @@ void oscEvent(OscMessage theOscMessage) {
     print("osc message from python", face_x, face_y);
   }
 
+  if (theOscMessage.checkAddrPattern("/multi_tracker_off")==true) {
+    multiObjectTrackingActive = false;
+    print("multi obj track off");
+  }
+
   if (theOscMessage.checkAddrPattern("/active_tracks")==true) { 
     multiObjectTrackingActive = true;
 
@@ -182,7 +199,8 @@ void oscEvent(OscMessage theOscMessage) {
 
 
     for (int i=0; i < n_tracks; i++) {
-      groups_list.add(theOscMessage.get(i*4+1).intValue());
+      groups_list.add(theOscMessage.get(i*4+1).intValue() + 1);  // note: this + 1 offset allows to have group 0 boids that 
+      //allow implementation of fade out effect of dead detected track ids  
       is_new_id.add(theOscMessage.get(i*4+2).intValue()==1);
       float[] xy = {theOscMessage.get(i*4+3).floatValue() * width, theOscMessage.get(i*4+4).floatValue() * height};
       xy_list.add(xy);
