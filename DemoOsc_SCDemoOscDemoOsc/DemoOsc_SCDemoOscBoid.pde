@@ -53,6 +53,7 @@ class Boid {
   Boid(int group) {
     this(mouseX, mouseY, group, paletteGenerator(), new PVector(mouseX, mouseY));
   }
+  
 
   void run(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
     flock(boids, dist); // compute force
@@ -122,7 +123,7 @@ class Boid {
   }
 
   void render(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
-    stroke(255, 255*life); //<>//
+    stroke(255, 255*life);
     fill(255, 255*life);
     int mul = 3;
     //if (group==0 && ( manual_control  || faceRecognitionActive )) { // cange appearance for the human point

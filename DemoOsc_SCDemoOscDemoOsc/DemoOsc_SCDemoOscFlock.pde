@@ -5,7 +5,9 @@ class Flock {
   ArrayList<Boid> boids; // An ArrayList for all the boids
   ArrayList<ArrayList<Float>> distances;
   int current_state;
+  int current_state2;
   int manual_boid_group;
+  ArrayList<Boid> deadBoids; // separate arraylist for boids that implement the fade out effect
 
   Flock() {
     boids = new ArrayList<Boid>(); // Initialize the ArrayList
@@ -18,7 +20,7 @@ class Flock {
     if (manual_control || faceRecognitionActive) {
       if (manual_control) {
         for (Boid b : boids) {
-          if (b.group == manual_boid_group) b.target = new PVector(mouseX, mouseY);
+          if (b.index == manual_boid_group) b.target = new PVector(mouseX, mouseY);
         }
         //boids.get(0).target = new PVector(mouseX, mouseY);
       } else {
@@ -43,19 +45,24 @@ class Flock {
     }
     // Passing the entire list of boids to each boid individually
     for (Boid b : boids) {
-      if (b.life > 0) b.run(boids, distances); // skip computation for dead boids: todo: improve
+      if (b.life > 0) b.run(boids, distances); // skip computation for dead boids: todo: maybe improve
     }
 
-    for (int i = N-1; i > 0; i--) {
-      // leave at least one boid
-      if (boids.get(i).life == 0 )  removeBoid(i);
-    }
+    //for (int i = N-1; i > 0; i--) {
+    //  // leave at least one boid
+    //  if (boids.get(i).life == 0 )  removeBoid(i);
+    //}
 
     //render the playing boid...
-    if (clock_active) {
+    if (clock_active && boids.size()>0) {
       stroke(#00ff00, 255);
       fill(255, 0);
       ellipse(boids.get(current_state).position.x, boids.get(current_state).position.y, 10, 10);
+    }
+    if (clock_2_active && boids.size()>0) {
+      stroke(#ffff00, 255);
+      fill(255, 0);
+      ellipse(boids.get(current_state2).position.x, boids.get(current_state2).position.y, 15, 15);
     }
   }
 
@@ -77,13 +84,13 @@ class Flock {
     }
   }
 
-  // overload function for simplicity
   void addDeadBoid(PVector position) {
     group = 0;
     color c = paletteGenerator();
     Boid b = new Boid(position.x, position.y, group, c, position);
     b.is_active = false;
-    addBoid(b);
+    b.is_fixed = true;
+    deadBoids.add(b);
   }
 
   synchronized void removeBoid(int index) {
@@ -129,6 +136,7 @@ class Flock {
     float[] probs = new float[boids.size()];
     // todo: add execution objects, or variables in this function (eg. an arraylist of integer?, or matrix)
 
+    // todo: enucleate this function (also in the flock.run() )
     float sum = 0;
     for (int j = 0; j < N; j++) {
       sum = sum + (tresh - min(tresh, distances.get(current_state).get(j)))/tresh;
@@ -140,8 +148,37 @@ class Flock {
 
     current_state = wchoose(probs);
     m.add(current_state);
-    printArray(probs);      // debugging print 
+    
+    printArray(probs);      // debugging print
     println(current_state);
+
+    //m.add(probs.length); // todo: capire che forma di messaggio si vuole in pure data
+
+    for (int i = 0; i < probs.length; i++) {
+      m.add(probs[i]);
+    }
+
+    return m;
+  }
+
+  // todo: unire queste due funzioni
+  public OscMessage computeMarkovMsg2() {
+    OscMessage m = new OscMessage("/probability");
+    float[] probs = new float[boids.size()];
+
+    float sum = 0;
+    for (int j = 0; j < N; j++) {
+      sum = sum + (tresh - min(tresh, distances.get(current_state2).get(j)))/tresh;
+    }
+    for (int j = 0; j < N; j++) {
+      float value = (tresh - min(tresh, distances.get(current_state2).get(j)))/tresh;
+      probs[j] = value/sum;
+    }
+
+    current_state2 = wchoose(probs);
+    m.add(current_state2);
+    printArray(probs);      // debugging print 
+    println(current_state2);
 
     //m.add(probs.length); // todo: capire che forma di messaggio si vuole in pure data
 

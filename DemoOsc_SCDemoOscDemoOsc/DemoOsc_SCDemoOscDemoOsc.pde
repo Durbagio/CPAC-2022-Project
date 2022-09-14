@@ -22,6 +22,8 @@ int render_target = 0;
 
 // moving boids playing 60 bpm: simulate pure data /clock message
 boolean clock_active = false;
+boolean clock_2_active = false;
+boolean internal_clock = true;
 int timer = 0 ; 
 
 float tresh = 500.0;
@@ -61,8 +63,9 @@ void draw() {
 
   fx.render().bloom(0.1, 100, 10).compose();
 
-  if ( clock_active && (millis() - timer >= 1000)) {
+  if ( internal_clock && clock_active && (millis() - timer >= 1000)) {
     flock.computeMarkovMsg();
+    if (clock_2_active) flock.computeMarkovMsg2(); // second executor
     timer = millis();
   }
 }
@@ -82,7 +85,7 @@ void mousePressed() {
     }
     print(flock.boids.size()+"\n");
     group++;
-  } else {
+  } else { // RIGHT button
     // restart
     // throw away all boids and create only one
     flock = new Flock();
@@ -90,8 +93,12 @@ void mousePressed() {
     color c = paletteGenerator();
     PVector t;
     t = new PVector(random(0, width), random(0, height));
-    flock.addBoid(new Boid(mouseX, mouseY, group, c, t));
-    group++;
+    //flock.addBoid(new Boid(mouseX, mouseY, group, c, t));
+    //group++;
+    clock_active = false;
+    clock_2_active = false;
+    flock.current_state = 0;
+    flock.current_state2 = 0;
 
     faceRecognitionActive = false;
     manual_control = false;
@@ -112,7 +119,7 @@ void keyPressed() {
       distances[i] = PVector.dist(flock.boids.get(i).position, new PVector(mouseX, mouseY)); // skip computation for dead boids: todo: improve
       if (distances[i] < distances[index_min]) index_min = i;
     }
-    flock.manual_boid_group = flock.boids.get(index_min).group;
+    flock.manual_boid_group = flock.boids.get(index_min).index;
     manual_control = !manual_control;
     break;
   case 'r':
@@ -129,17 +136,25 @@ void keyPressed() {
     print("\nframerate: ", frameRate);
     print("\nflocksize: ", flock.boids.size());
     print("\n");
-    delay(500);
+    //looping = !looping; // (un)freeze the execution
+    delay(1000);
     break;
   case 'f':
     group = max(200, group+1); // just set an offset to avoid interference with other boids 
-    //multiObjectTrackingActive = true; // just to freeze boids
     Boid b = new Boid(group);
     b.is_fixed = true;
     flock.addBoid(b);
     break;
   case 'c':
     clock_active = ! clock_active;
+    break;
+  case 'e':
+    group = max(200, group+1); // just set an offset to avoid interference with other boids 
+    Boid b2 = new Boid(group);
+    b2.is_fixed = true;
+    flock.addBoid(b2);
+    flock.current_state2 = flock.boids.size()-1;
+    clock_2_active = true;
     break;
   }
 
@@ -160,6 +175,8 @@ void keyPressed() {
       break;
     case 'k': // kill
       b.is_active = false;
+      clock_active = false;
+      flock.current_state = 0;
       break;
     }
   }
@@ -240,6 +257,13 @@ void oscEvent(OscMessage theOscMessage) {
   }
 
   if (theOscMessage.checkAddrPattern("/new_clock")==true) {
+    internal_clock = false; // stop internal metronome
+    // we could also join the two 
     oscP5.send(flock.computeMarkovMsg(), myRemoteLocation);
-    }
+  }
+  
+  if (theOscMessage.checkAddrPattern("/new_clock2")==true) {
+    internal_clock = false;
+    oscP5.send(flock.computeMarkovMsg2(), myRemoteLocation);
+  }
 }
