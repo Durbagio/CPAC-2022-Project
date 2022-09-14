@@ -17,11 +17,12 @@ float face_x, face_y;
 boolean faceRecognitionActive = false;
 boolean multiObjectTrackingActive = false;
 boolean manual_control = false;
-boolean SCComActive = true;
 boolean double_draw = false;
-boolean kill = false;
 int render_target = 0;
 
+// moving boids playing 60 bpm: simulate pure data /clock message
+boolean clock_active = false;
+int timer = 0 ; 
 
 float tresh = 500.0;
 
@@ -59,6 +60,11 @@ void draw() {
   flock.run();
 
   fx.render().bloom(0.1, 100, 10).compose();
+
+  if ( clock_active && (millis() - timer >= 1000)) {
+    flock.computeMarkovMsg();
+    timer = millis();
+  }
 }
 
 // Add a new boid into the System
@@ -98,10 +104,15 @@ void keyPressed() {
   case 'x':
     double_draw = !double_draw;
     break;
-  case 'm':
-    //for (Boid b : flock.boids) { // todo: fare cose
-    //  float d = PVector.dist(boids.get(i).position, boids.get(j).position); // skip computation for dead boids: todo: improve
-    //}
+  case 'm': // manual control (drag boid)
+    // find closest boid
+    float[] distances = new float[flock.boids.size()];
+    int index_min = 0;
+    for (int i = 0; i < distances.length; i++) {
+      distances[i] = PVector.dist(flock.boids.get(i).position, new PVector(mouseX, mouseY)); // skip computation for dead boids: todo: improve
+      if (distances[i] < distances[index_min]) index_min = i;
+    }
+    flock.manual_boid_group = flock.boids.get(index_min).group;
     manual_control = !manual_control;
     break;
   case 'r':
@@ -121,12 +132,14 @@ void keyPressed() {
     delay(500);
     break;
   case 'f':
-    group = max(200,group+1); // just set an offset to avoid interference with other boids 
-    multiObjectTrackingActive = true; // just to freeze boids
-    group = 0;
-    Boid b = new Boid(0);
+    group = max(200, group+1); // just set an offset to avoid interference with other boids 
+    //multiObjectTrackingActive = true; // just to freeze boids
+    Boid b = new Boid(group);
     b.is_fixed = true;
     flock.addBoid(b);
+    break;
+  case 'c':
+    clock_active = ! clock_active;
     break;
   }
 
@@ -214,7 +227,6 @@ void oscEvent(OscMessage theOscMessage) {
 
   if (theOscMessage.checkAddrPattern("/clock")==true) {
     int currentState = theOscMessage.get(0).intValue();
-    SCComActive = true;
     print("osc message from SC, current state: ", currentState);
 
     OscMessage MarkovMsg = new OscMessage("/markov");
@@ -226,4 +238,8 @@ void oscEvent(OscMessage theOscMessage) {
     MarkovMsg.print();
     print("\n");
   }
+
+  if (theOscMessage.checkAddrPattern("/new_clock")==true) {
+    oscP5.send(flock.computeMarkovMsg(), myRemoteLocation);
+    }
 }

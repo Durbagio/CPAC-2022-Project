@@ -4,19 +4,23 @@ int N;
 class Flock {
   ArrayList<Boid> boids; // An ArrayList for all the boids
   ArrayList<ArrayList<Float>> distances;
+  int current_state;
+  int manual_boid_group;
 
   Flock() {
     boids = new ArrayList<Boid>(); // Initialize the ArrayList
     distances = new ArrayList<ArrayList<Float>>();
   }
 
+
+  // todo: add infinite threshold for inactive boids
   synchronized void run() {
     if (manual_control || faceRecognitionActive) {
       if (manual_control) {
         for (Boid b : boids) {
-          if (b.group == 100) b.run(boids, distances); // skip computation for dead boids: todo: improve
+          if (b.group == manual_boid_group) b.target = new PVector(mouseX, mouseY);
         }
-        boids.get(0).target = new PVector(mouseX, mouseY);
+        //boids.get(0).target = new PVector(mouseX, mouseY);
       } else {
         boids.get(0).position = new PVector(face_x, face_y);
       }
@@ -42,10 +46,17 @@ class Flock {
       if (b.life > 0) b.run(boids, distances); // skip computation for dead boids: todo: improve
     }
 
-    //for (int i = N-1; i > 0; i--) {
-    //  // leave at least one boid
-    //  if (boids.get(i).life == 0 )  removeBoid(i);
-    //}
+    for (int i = N-1; i > 0; i--) {
+      // leave at least one boid
+      if (boids.get(i).life == 0 )  removeBoid(i);
+    }
+
+    //render the playing boid...
+    if (clock_active) {
+      stroke(#00ff00, 255);
+      fill(255, 0);
+      ellipse(boids.get(current_state).position.x, boids.get(current_state).position.y, 10, 10);
+    }
   }
 
 
@@ -85,6 +96,7 @@ class Flock {
     }
   }
 
+  // old function: maitained for backward compatibility
   void computeMarkovMsg(OscMessage m, int currentState) {
     float[][] probMatrix;
     float[] probs;
@@ -108,6 +120,36 @@ class Flock {
     for (int i = 0; i < probs.length; i++) {
       m.add(probs[i]);
     }
+  }
+
+  //////////////////////////////////////////////////////////////////
+  // overload the function
+  public OscMessage computeMarkovMsg() {
+    OscMessage m = new OscMessage("/probability");
+    float[] probs = new float[boids.size()];
+    // todo: add execution objects, or variables in this function (eg. an arraylist of integer?, or matrix)
+
+    float sum = 0;
+    for (int j = 0; j < N; j++) {
+      sum = sum + (tresh - min(tresh, distances.get(current_state).get(j)))/tresh;
+    }
+    for (int j = 0; j < N; j++) {
+      float value = (tresh - min(tresh, distances.get(current_state).get(j)))/tresh;
+      probs[j] = value/sum;
+    }
+
+    current_state = wchoose(probs);
+    m.add(current_state);
+    printArray(probs);      // debugging print 
+    println(current_state);
+
+    //m.add(probs.length); // todo: capire che forma di messaggio si vuole in pure data
+
+    for (int i = 0; i < probs.length; i++) {
+      m.add(probs[i]);
+    }
+
+    return m;
   }
 
   void move_group_target(int group, float x, float y) {
@@ -158,7 +200,6 @@ class Flock {
     }
   }
 
-
   /*
   void computeBPMMsg(OscMessage m) {
    N = boids.size();
@@ -166,4 +207,19 @@ class Flock {
    m.add(BPM);
    }
    */
+}
+
+// wheighted random choose of vector element
+public int wchoose(float[] probs) {
+  double p = random(1);
+  double cumulativeProbability = 0.0;
+  for (int i = 0; i < probs.length; i++) {
+    cumulativeProbability += probs[i];
+    if (p <= cumulativeProbability) {
+      return i;
+    }
+  }
+  // this should never be reached
+  print("WARNING: check the probability distribution vector (must be < 1)");
+  return -1;
 }

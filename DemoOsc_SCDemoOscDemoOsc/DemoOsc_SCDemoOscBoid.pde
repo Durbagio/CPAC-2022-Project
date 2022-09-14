@@ -1,5 +1,5 @@
 float step = 5.0; // random walker step
-int maxCount = 25;
+//int maxCount = 25;
 float  lifetime = 1; // seconds it will last
 float  time_to_life = 1; // time to get to full life
 
@@ -122,14 +122,14 @@ class Boid {
   }
 
   void render(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
-    stroke(255, 255*life);
+    stroke(255, 255*life); //<>//
     fill(255, 255*life);
     int mul = 3;
-    if (group==0 && ( manual_control  || faceRecognitionActive )) { // cange appearance for the human point
-      stroke(#ffcc00, 255*pow(life, 0.8));
-      fill(#ffcc00, 255*pow(life, 0.8));
-      mul = 6;
-    }
+    //if (group==0 && ( manual_control  || faceRecognitionActive )) { // cange appearance for the human point
+    //  stroke(#ffcc00, 255*pow(life, 0.8));
+    //  fill(#ffcc00, 255*pow(life, 0.8));
+    //  mul = 6;
+    //}
     ellipse(position.x, position.y, r*mul, r*mul);
     if (render_target>0) renderTarget();
     //print(position.x,position.y); // added for debugging
@@ -139,7 +139,7 @@ class Boid {
     for (i = 0; i < index; i++) {
       float other_life = boids.get(i).life;
       d = dist.get(index).get(i);
-      if ((d > 0) && (d < T) && (count < maxCount)) {
+      if ((d > 0) && (d < T)) { // && (count < maxCount)
         stroke(255, 255*pow((T-d)/T, 0.8)*min(life, other_life));
         strokeWeight(1.5);
         line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
@@ -152,7 +152,7 @@ class Boid {
       for (i = boids.size()-1; i > index; i--) {
         d = dist.get(index).get(i);
         float other_life = boids.get(i).life;
-        if ((d > 0) && (d < T) && (count < maxCount)) {
+        if ((d > 0) && (d < T)) { //  && (count < maxCount)
           stroke(255, 255*pow((T-d)/T, 0.8)*min(life, other_life));
           strokeWeight(1.5);
           line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
@@ -307,7 +307,7 @@ class Boid {
   // Target
   // For the group target position, calculate steering vector towards that position
   PVector walker() {
-    if (!is_fixed || !multiObjectTrackingActive) {
+    if (!is_fixed && !multiObjectTrackingActive) {
       move_target();
     }
     PVector steer = seek(target);
