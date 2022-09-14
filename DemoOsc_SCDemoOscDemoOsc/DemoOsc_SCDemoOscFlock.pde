@@ -163,7 +163,7 @@ class Flock {
 
   // todo: unire queste due funzioni
   public OscMessage computeMarkovMsg2() {
-    OscMessage m = new OscMessage("/probability");
+    OscMessage m = new OscMessage("/probability2");
     float[] probs = new float[boids.size()];
 
     float sum = 0;
