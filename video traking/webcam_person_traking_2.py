@@ -1,4 +1,5 @@
 import os
+from pickle import TRUE
 from turtle import width
 # this line suppresses errors multiple OpenMP, but does not work
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
@@ -40,15 +41,17 @@ ensure_packages_installed(['torch', 'torchvision', 'cv2'])
 python ./webcam_person_traking_2.py    --video_path='../CPAC-2022-Project/video traking/video examples/PETS09-S2L1-raw.webm'  --detect_labels=["person"]  --tracker_min_iou=0.2  --architecture=fasterrcnn  --device=cpu
 """
 
+video_downscale = 1 # default does not resize image
+
 video_path = './video examples/PETS09-S2L1-raw.webm'
 # video_path = './video examples/PETS09-S2L2-raw.webm'
 # video_path = './video examples/AVG-TownCentre-raw.webm'
 # video_path = './video examples/MOT20-06-raw.webm'
 # video_path = '' # uncomment to activate webcam input
-video_path = "https://www.youtube.com/watch?v=1-iS7LArMPA" # NY
-video_path = "https://www.youtube.com/watch?v=z4WeAR7tctA" # NY live walking
-video_path = "https://www.youtube.com/watch?v=h1wly909BYw" # Petersburg - ok
-video_path = "https://www.youtube.com/watch?v=PGrq-2mju2s" # time square
+# video_path = "https://www.youtube.com/watch?v=1-iS7LArMPA" # NY
+# video_path = "https://www.youtube.com/watch?v=z4WeAR7tctA" # NY live walking
+# video_path = "https://www.youtube.com/watch?v=h1wly909BYw"; video_downscale = 0.5 # Petersburg - ok
+# video_path = "https://www.youtube.com/watch?v=PGrq-2mju2s" # time square
 
 
 IP = '127.0.0.1'
@@ -133,7 +136,7 @@ def read_video_file(video_path: str):
         video = pafy.new(video_path)
         best = video.getbest(preftype="mp4")
         cap = cv2.VideoCapture(best.url)
-        video_fps = 25
+        video_fps = 10
     else:
         video_path = os.path.expanduser(video_path)
         cap = cv2.VideoCapture(video_path)
@@ -150,11 +153,11 @@ def center(boxArray):
 
 def osc_message_boid(track):
     # prepare the osc message for a single track
-    return [ordered_ids.index(track.id)] + center(track.box)
+    return [ordered_ids.index(track.id), is_new_id[ordered_ids.index(track.id)]] + center(track.box)
 
 
 def run(video_path: str = video_path, detect_labels = ["person"],
-        video_downscale: float = 1.,
+        video_downscale: float = video_downscale,
         architecture: str = 'fasterrcnnMob',
         confidence_threshold: float = 0.7,
         tracker_min_iou: float = 0.35,
@@ -191,23 +194,32 @@ def run(video_path: str = video_path, detect_labels = ["person"],
     # udp client for sending OSC messages
     client = udp_client.SimpleUDPClient(IP, PORT)
 
-    global ordered_ids, new_ids
+    global ordered_ids, new_ids, is_new_id
     ordered_ids = [''];
     new_ids = [''];
-
+    is_new_id = [''];
+    global imgHeight, imgWidth
+    framenum = -4
+    print(cv2.CAP_PROP_FRAME_COUNT)
+    
     while True:
-        ret, frame = cap.read()
-        global imgHeight, imgWidth
-        imgHeight, imgWidth, _ = frame.shape
+        if "youtube" in video_path:
+            ret, frame = cap.read(framenum + 4)  # for youtube video skip some frames
+            framenum = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        else:
+            ret, frame = cap.read()
+
+        # imgHeight, imgWidth, _ = frame.shape
         # frame = frame[1:round(imgHeight*0.5), 1:round(imgWidth*0.5)] # crop image
         # frame = frame[round(imgHeight*0.5):round(imgHeight), round(imgWidth*0.25):round(imgWidth*0.75)] # crop image
-        imgHeight, imgWidth, _ = frame.shape
 
         if not ret:
+            client.send_message('/multi_tracker_off')
             break
 
         # frame = cv2.resize(frame, fx=video_downscale, fy=video_downscale, dsize=None, interpolation=cv2.INTER_AREA)
-        frame = cv2.resize(frame, None, fx = 1, fy=1)
+        frame = cv2.resize(frame, None, fx = video_downscale, fy=video_downscale)
+        imgHeight, imgWidth, _ = frame.shape
         # detect objects in the frame
         detections = detector.process_image(frame)
 
@@ -230,25 +242,35 @@ def run(video_path: str = video_path, detect_labels = ["person"],
         # sort new and old ids, assigning a small positive number (their position in the ordered_ids list)
         new_ids = [track.id for track in active_tracks]
         ordered_ids = [ id if id in new_ids else '' for id in ordered_ids] # set '' to disappeared boxes (id)
+        is_new_id = [0] * len(is_new_id)
+
         for id in new_ids:
             if id not in ordered_ids:
                 if ordered_ids.count('') > 0:
+                    is_new_id[ordered_ids.index('')] = 1
                     ordered_ids[ordered_ids.index('')] = id
                 else:
+                    is_new_id.append(1)
                     ordered_ids.append(id)
 
         # attr = [xy for det in active_tracks for xy in center(det.box,imgHeight,imgWidth)]
         # client.send_message('/active_tracks', [len(attr)] + attr )
 
         attr = [nxy for det in active_tracks for nxy in osc_message_boid(det)]
-        # [n1, x1, y1, n2, x2, y2, ...]
+        print(attr)
+        # [n1, bool1, x1, y1, n2, x2, y2, ...]
         client.send_message('/active_tracks', [len(active_tracks)] + attr )
-        # print([len(active_tracks)] + attr)
+        print([len(active_tracks)] + attr)
+
+
 
         cv2.imshow('frame', frame)
         c = cv2.waitKey(viz_wait_ms)
         if c == ord('q'):
+            client.send_message('/multi_tracker_off')
             break
+    
+
 
 
 if __name__ == '__main__':
