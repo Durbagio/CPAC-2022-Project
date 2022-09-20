@@ -29,7 +29,8 @@ int timer = 0 ;
 float tresh = 500.0;
 
 void setup() {
-  size(1280, 720, P2D);
+  //size(1280, 720, P2D);
+  size(500, 500, P2D);
   //fullScreen(P2D);
   fx = new PostFX(this);
   fx.preload(BloomPass.class);
@@ -242,6 +243,7 @@ void oscEvent(OscMessage theOscMessage) {
     flock.move_targets(groups_list, xy_list, is_new_id);
   }
 
+
   if (theOscMessage.checkAddrPattern("/clock")==true) {
     int currentState = theOscMessage.get(0).intValue();
     print("osc message from SC, current state: ", currentState);
@@ -255,6 +257,7 @@ void oscEvent(OscMessage theOscMessage) {
     MarkovMsg.print();
     print("\n");
   }
+ 
 
   if (theOscMessage.checkAddrPattern("/new_clock")==true) {
     internal_clock = false; // stop internal metronome

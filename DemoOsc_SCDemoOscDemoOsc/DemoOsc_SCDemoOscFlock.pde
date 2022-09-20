@@ -103,6 +103,7 @@ class Flock {
     }
   }
 
+
   // old function: maitained for backward compatibility
   void computeMarkovMsg(OscMessage m, int currentState) {
     float[][] probMatrix;
@@ -157,7 +158,7 @@ class Flock {
     for (int i = 0; i < probs.length; i++) {
       m.add(probs[i]);
     }
-
+    m.print();
     return m;
   }
 
