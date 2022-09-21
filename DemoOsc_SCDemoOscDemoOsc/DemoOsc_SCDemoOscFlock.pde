@@ -12,10 +12,11 @@ class Flock {
   Flock() {
     boids = new ArrayList<Boid>(); // Initialize the ArrayList
     distances = new ArrayList<ArrayList<Float>>();
+    deadBoids = new ArrayList<Boid>();
   }
 
 
-  // todo: add infinite threshold for inactive boids
+  // todo: add infinite threshold for inactive boids; or use different approach: new boids
   synchronized void run() {
     if (manual_control || faceRecognitionActive) {
       if (manual_control) {
@@ -27,31 +28,29 @@ class Flock {
         boids.get(0).position = new PVector(face_x, face_y);
       }
     }
-    // calculate the distance triangular matrix
-    N = boids.size();
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < i; j++) {
-        float d = PVector.dist(boids.get(i).position, boids.get(j).position);
-        distances.get(i).set(j, d);
-      }
-      // elemento sulla diagonale (distanza da se stesso = 0)
-      distances.get(i).set(i, 0.0);
-    }
-    // transform the matrices into simmetric ones
-    for (int i = 0; i< N; i++) {
-      for (int j = i+1; j < N; j++) {
-        distances.get(i).set(j, distances.get(j).get(i));
-      }
-    }
+    compute_markov_matrix();
     // Passing the entire list of boids to each boid individually
     for (Boid b : boids) {
       if (b.life > 0) b.run(boids, distances); // skip computation for dead boids: todo: maybe improve
     }
 
-    //for (int i = N-1; i > 0; i--) {
-    //  // leave at least one boid
-    //  if (boids.get(i).life == 0 )  removeBoid(i);
-    //}
+    //dead boids
+    ArrayList<Boid> all_boids = new ArrayList<Boid>();
+    all_boids.addAll(deadBoids);
+    all_boids.addAll(boids);
+    //println(deadBoids.size());
+    //for (int i = 0; i < deadBoids.size(); i++) {
+    for (int i = deadBoids.size()-1; i >= 0 ; i--) {
+      //print("here");
+      all_boids.get(i).render(all_boids, i);
+      all_boids.get(i).decrease_life();
+      if ( deadBoids.get(i).life == 0 ) deadBoids.remove(i);
+    }
+
+    for (int i = N-1; i > 0; i--) {
+      // leave at least one boid
+      if (boids.get(i).life == 0 )  removeBoid(i);
+    }
 
     //render the playing boid...
     if (clock_active && boids.size()>0) {
@@ -90,6 +89,7 @@ class Flock {
     Boid b = new Boid(position.x, position.y, group, c, position);
     b.is_active = false;
     b.is_fixed = true;
+    b.life = 2;
     deadBoids.add(b);
   }
 
@@ -101,6 +101,8 @@ class Flock {
     for (ArrayList<Float> row : distances) { // remove last colum (each entry of row)
       row.remove(index);
     }
+    // shift indexes
+    for (int i = index; i < boids.size(); i++) boids.get(i).index = i;
   }
 
   // old function: maitained for backward compatibility
@@ -148,7 +150,7 @@ class Flock {
 
     current_state = wchoose(probs);
     m.add(current_state);
-    
+
     printArray(probs);      // debugging print
     println(current_state);
 
@@ -198,23 +200,28 @@ class Flock {
   }
 
   // this function is executed each time an OscMessage is received from python
-  void move_targets(ArrayList<Integer> groups, ArrayList<float[]> xy_list, ArrayList<Boolean> is_new_id) {
+  synchronized void move_targets(ArrayList<Integer> groups, ArrayList<float[]> xy_list, ArrayList<Boolean> is_new_id) {
     // update all current existing boids:
     ArrayList<Integer> existing_groups = new ArrayList<Integer>();
-    for (Boid b : boids) {
+    //for (Boid b : boids) {
+    for (int i = boids.size()-1; i >= 0; i--) {
+      Boid b = boids.get(i);
       existing_groups.add(b.group);
       if ( groups.contains(b.group) ) {
         b.set_target( xy_list.get(groups.indexOf(b.group)) );
         b.is_active = true;
         if ( is_new_id.get(groups.indexOf(b.group)) ) {
-          //addDeadBoid(b.position); // for fade out effect
+          addDeadBoid(b.position); // for fade out effect
+
           // fade in effect, for the boid in the new position
           b.life = 1e-4; // eps
           // for faster convergence change also the position... maybe remove for smoother effect.
           b.position = ( new PVector( xy_list.get(groups.indexOf(b.group))[0], xy_list.get(groups.indexOf(b.group))[1] ));
         }
       } else {
-        b.is_active = false;
+        addDeadBoid(b.position);
+        removeBoid(b.index);
+        //b.is_active = false;
       }
     }
 
@@ -224,7 +231,9 @@ class Flock {
         float x = xy_list.get(groups.indexOf(g))[0];
         float y = xy_list.get(groups.indexOf(g))[1];
         PVector target = new PVector( x, y );
-        addBoid(new Boid(x, y, g, paletteGenerator(), target));
+        Boid b = new Boid(x, y, g, paletteGenerator(), target);
+        b.life = 1e-4; // eps
+        addBoid(b);
       }
     }
   }
@@ -234,6 +243,25 @@ class Flock {
     for ( Boid b : boids ) {
       PVector position = new PVector(random(0, width), random(0, height));
       b.position = position;
+    }
+  }
+
+  void compute_markov_matrix() {
+    // calculate the distance triangular matrix
+    N = boids.size();
+    for (int i = 0; i < N; i++) {
+      for (int j = 0; j < i; j++) {
+        float d = PVector.dist(boids.get(i).position, boids.get(j).position);
+        distances.get(i).set(j, d);
+      }
+      // elemento sulla diagonale (distanza da se stesso = 0)
+      distances.get(i).set(i, 0.0);
+    }
+    // transform the matrices into simmetric ones
+    for (int i = 0; i< N; i++) {
+      for (int j = i+1; j < N; j++) {
+        distances.get(i).set(j, distances.get(j).get(i));
+      }
     }
   }
 
