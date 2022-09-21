@@ -95,6 +95,7 @@ class Flock {
     deadBoids.add(b);
   }
 
+  // todo: somewere treat the index changing and current_state 
   synchronized void removeBoid(int index) {
     //int N_old = boids.size();
     boids.remove(index);
@@ -153,12 +154,8 @@ class Flock {
     current_state = wchoose(probs);
     m.add(nomalize_curr_state(current_state, probs));
 
-    printArray(probs);      // debugging print
-    println(current_state);
-    
-    //for (int i = 0; i < probs.length; i++) {
-    //  m.add(probs[i]);
-    //}
+    //printArray(probs);
+    //println(current_state);
 
     return m;
   }
@@ -180,13 +177,9 @@ class Flock {
     current_state2 = wchoose(probs);
     m.add(nomalize_curr_state(current_state2, probs));
     
-    printArray(probs);      // debugging print 
-    println(current_state2);
-
-    //for (int i = 0; i < probs.length; i++) {
-    //  m.add(probs[i]);
-    //}
-
+    //printArray(probs);
+    //println(current_state2);
+    
     return m;
   }
 
@@ -290,13 +283,11 @@ public int wchoose(float[] probs) {
 
 // format the state to facilitate PD state manage
 // convert the index to normalize to the goup size
-public int nomalize_curr_state(int current_state, float[] probs) {
-  int nonNull_index = 0;
+public int[] nomalize_curr_state(int current_state, float[] probs) {
+  int nonNull_index = 0, nonNull_count = 0;
   for (int i = 0; i < probs.length; i++) {
-    if ( i == current_state) return ( nonNull_index%10 )+1;
-    if (probs[i] > 0) nonNull_index++;
+    if ( i == current_state) nonNull_index = nonNull_count;
+    if (probs[i] > 0) nonNull_count++;
   }
-  // should never reach here
-  print("ERROR");
-  return -1;
+  return new int[]  {(nonNull_index % 10)+1, nonNull_count};
 }
