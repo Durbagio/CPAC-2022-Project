@@ -13,6 +13,8 @@ class Flock {
     boids = new ArrayList<Boid>(); // Initialize the ArrayList
     distances = new ArrayList<ArrayList<Float>>();
     deadBoids = new ArrayList<Boid>();
+    current_state = 0;
+    current_state2 = 0;
   }
 
 
@@ -40,7 +42,7 @@ class Flock {
     all_boids.addAll(boids);
     //println(deadBoids.size());
     //for (int i = 0; i < deadBoids.size(); i++) {
-    for (int i = deadBoids.size()-1; i >= 0 ; i--) {
+    for (int i = deadBoids.size()-1; i >= 0; i--) {
       //print("here");
       all_boids.get(i).render(all_boids, i);
       all_boids.get(i).decrease_life();
@@ -114,10 +116,10 @@ class Flock {
     for (int i = 0; i < N; i++) {
       float sum = 0;
       for (int j = 0; j < N; j++) {
-        sum = sum + (tresh - min(tresh, distances.get(i).get(j)))/tresh;
+        sum = sum + (thresh - min(thresh, distances.get(i).get(j)))/thresh;
       }
       for (int j = 0; j < N; j++) {
-        float value = (tresh - min(tresh, distances.get(i).get(j)))/tresh;
+        float value = (thresh - min(thresh, distances.get(i).get(j)))/thresh;
         probMatrix[i][j] = value/sum;
         //m.add(value/sum);
         //m.add(probMatrix[i][j]);
@@ -141,24 +143,22 @@ class Flock {
     // todo: enucleate this function (also in the flock.run() )
     float sum = 0;
     for (int j = 0; j < N; j++) {
-      sum = sum + (tresh - min(tresh, distances.get(current_state).get(j)))/tresh;
+      sum = sum + (thresh - min(thresh, distances.get(current_state).get(j)))/thresh;
     }
     for (int j = 0; j < N; j++) {
-      float value = (tresh - min(tresh, distances.get(current_state).get(j)))/tresh;
+      float value = (thresh - min(thresh, distances.get(current_state).get(j)))/thresh;
       probs[j] = value/sum;
     }
 
     current_state = wchoose(probs);
-    m.add(current_state);
+    m.add(nomalize_curr_state(current_state, probs));
 
     printArray(probs);      // debugging print
     println(current_state);
-
-    //m.add(probs.length); // todo: capire che forma di messaggio si vuole in pure data
-
-    for (int i = 0; i < probs.length; i++) {
-      m.add(probs[i]);
-    }
+    
+    //for (int i = 0; i < probs.length; i++) {
+    //  m.add(probs[i]);
+    //}
 
     return m;
   }
@@ -170,23 +170,22 @@ class Flock {
 
     float sum = 0;
     for (int j = 0; j < N; j++) {
-      sum = sum + (tresh - min(tresh, distances.get(current_state2).get(j)))/tresh;
+      sum = sum + (thresh - min(thresh, distances.get(current_state2).get(j)))/thresh;
     }
     for (int j = 0; j < N; j++) {
-      float value = (tresh - min(tresh, distances.get(current_state2).get(j)))/tresh;
+      float value = (thresh - min(thresh, distances.get(current_state2).get(j)))/thresh;
       probs[j] = value/sum;
     }
 
     current_state2 = wchoose(probs);
-    m.add(current_state2);
+    m.add(nomalize_curr_state(current_state2, probs));
+    
     printArray(probs);      // debugging print 
     println(current_state2);
 
-    //m.add(probs.length); // todo: capire che forma di messaggio si vuole in pure data
-
-    for (int i = 0; i < probs.length; i++) {
-      m.add(probs[i]);
-    }
+    //for (int i = 0; i < probs.length; i++) {
+    //  m.add(probs[i]);
+    //}
 
     return m;
   }
@@ -286,5 +285,18 @@ public int wchoose(float[] probs) {
   }
   // this should never be reached
   print("WARNING: check the probability distribution vector (must be < 1)");
+  return -1;
+}
+
+// format the state to facilitate PD state manage
+// convert the index to normalize to the goup size
+public int nomalize_curr_state(int current_state, float[] probs) {
+  int nonNull_index = 0;
+  for (int i = 0; i < probs.length; i++) {
+    if ( i == current_state) return ( nonNull_index%10 )+1;
+    if (probs[i] > 0) nonNull_index++;
+  }
+  // should never reach here
+  print("ERROR");
   return -1;
 }

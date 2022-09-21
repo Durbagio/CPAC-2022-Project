@@ -134,7 +134,7 @@ class Boid {
     if (render_target>0) renderTarget();
     //print(position.x,position.y); // added for debugging
     int i, count = 0;
-    float d, T=tresh; // todo: maybe reduce the treshold
+    float d, T=thresh; // todo: maybe reduce the threshold
     // distance for 0 to index
     for (i = 0; i < index; i++) {
       float other_life = boids.get(i).life;
@@ -171,7 +171,7 @@ class Boid {
     ellipse(position.x, position.y, r*mul, r*mul);
 
     // connection lines
-    float d, T=tresh;
+    float d, T=thresh;
     for (int j = i+1; j < all_boids.size(); j++) {
       float other_life = all_boids.get(j).life;
       d = PVector.dist(position, all_boids.get(j).position);

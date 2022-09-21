@@ -26,7 +26,7 @@ boolean clock_2_active = false;
 boolean internal_clock = true;
 int timer = 0 ; 
 
-float tresh = 500.0;
+float thresh = 500.0;
 
 void setup() {
   size(1280, 720, P2D);
