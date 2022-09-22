@@ -139,22 +139,28 @@ class Flock {
   public OscMessage computeMarkovMsg() {
     OscMessage m = new OscMessage("/probability");
     float[] probs = new float[boids.size()];
-    // todo: add execution objects, or variables in this function (eg. an arraylist of integer?, or matrix)
-
-    // todo: enucleate this function (also in the flock.run() )
+    float[] values = new float[boids.size()];
     float sum = 0;
+    float cont = 0;
+    // todo: add execution objects, or variables in this function (eg. an arraylist of integer?, or matrix
+    // todo: enucleate this function (also in the flock.run() )
     for (int j = 0; j < N; j++) {
-      sum = sum + (thresh - min(thresh, distances.get(current_state).get(j)))/thresh;
+      values[j] = (thresh - min(thresh, distances.get(current_state).get(j)))/thresh;
+      if (values[j] > 0) cont++;
     }
+    if (N > 1 && cont > 1) values[current_state] = 0;
     for (int j = 0; j < N; j++) {
-      float value = (thresh - min(thresh, distances.get(current_state).get(j)))/thresh;
-      probs[j] = value/sum;
+      sum = sum + values[j];
+    }
+    
+    for (int j = 0; j < N; j++) {
+      probs[j] = values[j]/sum;
     }
 
     current_state = wchoose(probs);
     m.add(nomalize_curr_state(current_state, probs));
 
-    //printArray(probs);
+    printArray(probs);
     //println(current_state);
 
     return m;
@@ -164,16 +170,27 @@ class Flock {
   public OscMessage computeMarkovMsg2() {
     OscMessage m = new OscMessage("/probability2");
     float[] probs = new float[boids.size()];
-
+    float[] values = new float[boids.size()];
     float sum = 0;
+    float cont = 0;
+    // todo: add execution objects, or variables in this function (eg. an arraylist of integer?, or matrix
+    // todo: enucleate this function (also in the flock.run() )
     for (int j = 0; j < N; j++) {
-      sum = sum + (thresh - min(thresh, distances.get(current_state2).get(j)))/thresh;
+      values[j] = (thresh - min(thresh, distances.get(current_state).get(j)))/thresh;
+      if (values[j] > 0) cont++;
     }
+    if (N > 1 && cont == 1) values[current_state] = 0;
     for (int j = 0; j < N; j++) {
-      float value = (thresh - min(thresh, distances.get(current_state2).get(j)))/thresh;
-      probs[j] = value/sum;
+      sum = sum + values[j];
     }
-
+    
+    for (int j = 0; j < N; j++) {
+      probs[j] = values[j]/sum;
+    }
+    
+    for (int j = 0; j < N; j++) {
+      probs[j] = values[j]/sum;
+    }
     current_state2 = wchoose(probs);
     m.add(nomalize_curr_state(current_state2, probs));
     
@@ -286,8 +303,10 @@ public int wchoose(float[] probs) {
 public int[] nomalize_curr_state(int current_state, float[] probs) {
   int nonNull_index = 0, nonNull_count = 0;
   for (int i = 0; i < probs.length; i++) {
-    if ( i == current_state) nonNull_index = nonNull_count;
+    if (i == current_state) nonNull_index = nonNull_count;
     if (probs[i] > 0) nonNull_count++;
   }
-  return new int[]  {(nonNull_index % 10)+1, nonNull_count};
+  if (probs.length != 1) nonNull_count = nonNull_count + 1; 
+  //return new int[]  {(nonNull_index % 10)+1, nonNull_count};
+  return new int[]  {current_state + 1, nonNull_count};
 }
