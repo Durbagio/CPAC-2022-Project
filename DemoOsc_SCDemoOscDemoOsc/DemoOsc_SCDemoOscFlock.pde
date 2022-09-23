@@ -142,6 +142,7 @@ class Flock {
     float[] values = new float[boids.size()];
     float sum = 0;
     float cont = 0;
+    int new_state;
     // todo: add execution objects, or variables in this function (eg. an arraylist of integer?, or matrix
     // todo: enucleate this function (also in the flock.run() )
     for (int j = 0; j < N; j++) {
@@ -157,11 +158,15 @@ class Flock {
       probs[j] = values[j]/sum;
     }
 
-    current_state = wchoose(probs);
-    m.add(nomalize_curr_state(current_state, probs));
+    new_state = wchoose(probs);
+    m.add(nomalize_curr_state(current_state, new_state, probs));
+    current_state = new_state;
 
     printArray(probs);
     //println(current_state);
+    print("Es1: ");
+    m.print();
+    print("\n");
 
     return m;
   }
@@ -173,13 +178,14 @@ class Flock {
     float[] values = new float[boids.size()];
     float sum = 0;
     float cont = 0;
+    int new_state2;
     // todo: add execution objects, or variables in this function (eg. an arraylist of integer?, or matrix
     // todo: enucleate this function (also in the flock.run() )
     for (int j = 0; j < N; j++) {
-      values[j] = (thresh - min(thresh, distances.get(current_state).get(j)))/thresh;
+      values[j] = (thresh - min(thresh, distances.get(current_state2).get(j)))/thresh;
       if (values[j] > 0) cont++;
     }
-    if (N > 1 && cont == 1) values[current_state] = 0;
+    if (N > 1 && cont > 1) values[current_state2] = 0;
     for (int j = 0; j < N; j++) {
       sum = sum + values[j];
     }
@@ -187,16 +193,17 @@ class Flock {
     for (int j = 0; j < N; j++) {
       probs[j] = values[j]/sum;
     }
-    
-    for (int j = 0; j < N; j++) {
-      probs[j] = values[j]/sum;
-    }
-    current_state2 = wchoose(probs);
-    m.add(nomalize_curr_state(current_state2, probs));
-    
+
+    new_state2 = wchoose(probs);
+    m.add(nomalize_curr_state(current_state2, new_state2, probs));
+    current_state2 = new_state2;
+
     //printArray(probs);
     //println(current_state2);
-    
+    print("Es2: ");
+    m.print();
+    print("\n");
+
     return m;
   }
 
@@ -300,13 +307,13 @@ public int wchoose(float[] probs) {
 
 // format the state to facilitate PD state manage
 // convert the index to normalize to the goup size
-public int[] nomalize_curr_state(int current_state, float[] probs) {
+public int[] nomalize_curr_state(int prev_state, int current_state, float[] probs) {
   int nonNull_index = 0, nonNull_count = 0;
   for (int i = 0; i < probs.length; i++) {
     if (i == current_state) nonNull_index = nonNull_count;
     if (probs[i] > 0) nonNull_count++;
   }
-  if (probs.length != 1) nonNull_count = nonNull_count + 1; 
+  if (prev_state != current_state) nonNull_count = nonNull_count + 1;  //se lo stato viene ripetuto allora il gruppo è unitario
   //return new int[]  {(nonNull_index % 10)+1, nonNull_count};
   return new int[]  {current_state + 1, nonNull_count};
 }
