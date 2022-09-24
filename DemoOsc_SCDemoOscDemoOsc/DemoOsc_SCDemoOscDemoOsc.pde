@@ -22,14 +22,17 @@ int render_target = 0;
 
 // moving boids playing 60 bpm: simulate pure data /clock message
 boolean clock_active = false;
-boolean clock_2_active = false;
 boolean internal_clock = true;
+boolean executor_visualization = true;
 int timer = 0 ; 
+
+int max_number_executors = 4;
 
 float thresh = 500.0;
 
 void setup() {
   size(1280, 720, P2D);
+  //size(1920, 1080, P2D);
   //fullScreen(P2D);
   fx = new PostFX(this);
   fx.preload(BloomPass.class);
@@ -64,8 +67,9 @@ void draw() {
   fx.render().bloom(0.1, 100, 10).compose();
 
   if ( internal_clock && clock_active && (millis() - timer >= 1000)) {
-    flock.computeMarkovMsg();
-    if (clock_2_active) flock.computeMarkovMsg2(); // second executor
+    for ( int i = 0; i < flock.executors.size(); i++) {
+        if ( flock.playing_executors.contains(i) ) oscP5.send(flock.computeMarkovMsg(i), myRemoteLocation);
+      }
     timer = millis();
   }
 }
@@ -96,10 +100,8 @@ void mousePressed() {
     //flock.addBoid(new Boid(mouseX, mouseY, group, c, t));
     //group++;
     clock_active = false;
-    clock_2_active = false;
     flock.current_state = 0;
     flock.current_state2 = 0;
-
     faceRecognitionActive = false;
     manual_control = false;
     multiObjectTrackingActive = false;
@@ -111,15 +113,13 @@ void keyPressed() {
   case 'x':
     double_draw = !double_draw;
     break;
+  case 'z': // kill a specific boid
+    int index = flock.find_closest_boid(new PVector(mouseX, mouseY));
+    flock.addDeadBoid(flock.boids.get(index).position);
+    flock.removeBoid(index);
+    break;
   case 'm': // manual control (drag boid)
-    // find closest boid
-    float[] distances = new float[flock.boids.size()];
-    int index_min = 0;
-    for (int i = 0; i < distances.length; i++) {
-      distances[i] = PVector.dist(flock.boids.get(i).position, new PVector(mouseX, mouseY)); // skip computation for dead boids: todo: improve
-      if (distances[i] < distances[index_min]) index_min = i;
-    }
-    flock.manual_boid_group = flock.boids.get(index_min).index;
+    flock.manual_boid_group = flock.find_closest_boid(new PVector(mouseX, mouseY));
     manual_control = !manual_control;
     break;
   case 'r':
@@ -129,7 +129,7 @@ void keyPressed() {
     render_target = (render_target + 1) % 3;
     break;
   case 'd':
-    flock.addDeadBoid(new PVector(mouseX,mouseY));
+    flock.addDeadBoid(new PVector(mouseX, mouseY));
     break;
   case 'p':
     print("\n\n");
@@ -149,7 +149,15 @@ void keyPressed() {
     flock.addBoid(b);
     break;
   case 'c':
-    clock_active = ! clock_active;
+    //if (flock.paused_executors.size() > 0 ) {
+    //  flock.playing_executors.add(0, flock.paused_executors.remove(0));
+    //  //executors.get(playing_executors.get(0)).current_state = clusters.get(playing_executors.get(0)).get_random_index();
+    //  flock.executors.get(flock.playing_executors.get(0)).boid = flock.boids.get(flock.clusters.get(flock.playing_executors.get(0)).get_random_index());
+    //}
+    clock_active = !clock_active;
+    break;
+  case 'v':
+    executor_visualization = !executor_visualization;
     break;
   case 'e':
     group = max(200, group+1); // just set an offset to avoid interference with other boids 
@@ -157,7 +165,6 @@ void keyPressed() {
     b2.is_fixed = true;
     flock.addBoid(b2);
     flock.current_state2 = flock.boids.size()-1;
-    clock_2_active = true;
     break;
   }
 
@@ -269,14 +276,12 @@ void oscEvent(OscMessage theOscMessage) {
     print("\n");
   }
 
-  if (theOscMessage.checkAddrPattern("/new_clock")==true) {
-    internal_clock = false; // stop internal metronome
-    // we could also join the two 
-    oscP5.send(flock.computeMarkovMsg(), myRemoteLocation);
-  }
-
-  if (theOscMessage.checkAddrPattern("/new_clock2")==true) {
-    internal_clock = false;
-    oscP5.send(flock.computeMarkovMsg2(), myRemoteLocation);
+  // clock from puredata
+  for ( int i = 0; i < max_number_executors; i++) {
+    if (theOscMessage.checkAddrPattern("/new_clock" + i)==true) {
+      internal_clock = false; // stop internal metronome
+      // send message iif the executor is playing
+      if ( flock.playing_executors.contains(i) ) oscP5.send(flock.computeMarkovMsg(i), myRemoteLocation);
+    }
   }
 }

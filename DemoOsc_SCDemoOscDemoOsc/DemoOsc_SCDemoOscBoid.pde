@@ -1,6 +1,5 @@
 float step = 5.0; // random walker step
 //int maxCount = 25;
-float  lifetime = 1; // seconds it will last
 float  time_to_life = 1; // time to get to full life
 
 // The Boid class
@@ -20,6 +19,7 @@ class Boid {
   float life;
   boolean is_active;
   boolean is_fixed;
+  float lifetime;
 
   Boid(float x, float y, int g, color c, PVector t) {
     acceleration = new PVector(0, 0);
@@ -46,6 +46,8 @@ class Boid {
     is_active = true;
 
     is_fixed = false;
+    
+    lifetime = 1;
   }
 
   // overload contructor
@@ -360,7 +362,8 @@ class Boid {
   }
 
   void decrease_life() {
-    life = max(life - 1/frameRate/lifetime, 0);
+    life = max(life - 1/frameRate/lifetime, 0); // if use this change deadBoids lifetime to 1
+    //life = max(pow(life - 1/frameRate/lifetime, 1.02), 0); // deadBoids lifetime to 2
   }
 
   void increase_life() {
