@@ -44,16 +44,15 @@ class Boid {
 
     life = 1;
     is_active = true;
-    
+
     is_fixed = false;
-    
   }
 
   // overload contructor
   Boid(int group) {
     this(mouseX, mouseY, group, paletteGenerator(), new PVector(mouseX, mouseY));
   }
-  
+
 
   void run(ArrayList<Boid> boids, ArrayList<ArrayList<Float>> dist) {
     flock(boids, dist); // compute force
@@ -135,7 +134,7 @@ class Boid {
     if (render_target>0) renderTarget();
     //print(position.x,position.y); // added for debugging
     int i, count = 0;
-    float d, T=tresh; // todo: maybe reduce the treshold
+    float d, T=thresh; // todo: maybe reduce the threshold
     // distance for 0 to index
     for (i = 0; i < index; i++) {
       float other_life = boids.get(i).life;
@@ -159,6 +158,27 @@ class Boid {
           line(position.x, position.y, boids.get(i).position.x, boids.get(i).position.y);
           count++;
         }
+      }
+    }
+  }
+
+  // overload function for dead boids rendering
+  void render(ArrayList<Boid> all_boids, int i) {
+    // circle
+    stroke(255, 255*life);
+    fill(255, 255*life);
+    int mul = 3;
+    ellipse(position.x, position.y, r*mul, r*mul);
+
+    // connection lines
+    float d, T=thresh;
+    for (int j = i+1; j < all_boids.size(); j++) {
+      float other_life = all_boids.get(j).life;
+      d = PVector.dist(position, all_boids.get(j).position);
+      if ((d > 0) && (d < T)) {
+        stroke(255, 255*pow((T-d)/T, 0.8)*min(life, other_life));
+        strokeWeight(1.5);
+        line(position.x, position.y, all_boids.get(j).position.x, all_boids.get(j).position.y);
       }
     }
   }
