@@ -89,7 +89,7 @@ class Flock {
     textSize(30);
     connectedComponents();
     text(text, 10, 80);
-    //printArray(groups);  
+    //printArray(groups);
     //for (Cluster g : clusters) {
     //  println(g);
     //}
@@ -167,17 +167,20 @@ class Flock {
   synchronized public OscMessage computeMarkovMsg(int executor_index) {
     OscMessage m = new OscMessage("/probability" + executor_index);
     float[] probs = new float[boids.size()];
-
+    float[] values = new float[boids.size()];
     float sum = 0;
+    float cont = 0;
     for (int j = 0; j < N; j++) {
-      sum = sum + (thresh - min(thresh, distances.get(executors.get(executor_index).boid.index).get(j)))/thresh;
+      values[j] = (thresh - min(thresh, distances.get(executors.get(executor_index).boid.index).get(j)))/thresh;
+      if (values[j] > 0) cont++;
+    }
+    if (N > 1 && cont > 1) values[executors.get(executor_index).boid.index] = 0;
+    for (int j = 0; j < N; j++) {
+      sum = sum + values[j];
     }
     for (int j = 0; j < N; j++) {
-      float value = (thresh - min(thresh, distances.get(executors.get(executor_index).boid.index).get(j)))/thresh;
-      probs[j] = value/sum;
+      probs[j] = values[j]/sum;
     }
-
-    // todo: merge claudio's code
 
     //executors.get(executor_index).current_state = wchoose(probs);
     //executors.get(executor_index).boid = boids.get(executors.get(executor_index).current_state);
@@ -197,7 +200,7 @@ class Flock {
       if ( i == executors.get(executor_index).current_state) nonNull_index = nonNull_count;
       if (probs[i] > 0) nonNull_count++;
     }
-    
+
     // handle executors on the same boid
     for ( int i = playing_executors.size()-1; i >=0 ; i--) {
       int other_index = playing_executors.get(i);
@@ -313,7 +316,7 @@ class Flock {
    */
 
   // find closest boid, but ensure is not the same
-  public int find_closest_boid(PVector position) { 
+  public int find_closest_boid(PVector position) {
     float[] distances = new float[flock.boids.size()];
     int index_min = 0;
     for (int i = 0; i < distances.length; i++) {
@@ -436,7 +439,7 @@ int count_connected_groups(ArrayList<ArrayList<Float>> distances) {
   int count = 0;
   while (n > 0) {
     count++;
-    n--; 
+    n--;
     int node = nodes_to_check[n];
     ArrayList<Float> adjacent = distances.get(node);
     int i = 0;
