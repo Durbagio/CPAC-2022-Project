@@ -200,9 +200,6 @@ class Flock {
 
     //printArray(probs);
     //println(current_state2);
-    print("Es2: ");
-    m.print();
-    print("\n");
 
     return m;
   }
