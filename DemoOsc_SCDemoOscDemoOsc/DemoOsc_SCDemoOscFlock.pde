@@ -1,4 +1,4 @@
-// The Flock (a list of Boid objects) //<>//
+// The Flock (a list of Boid objects) //<>// //<>//
 int N;
 int max_pure_data_boids = 10;
 
@@ -189,10 +189,9 @@ class Flock {
         }
       }
     }
-
+    
     // add OSC message
-
-    //m.add(executors.get(executor_index).boid.index + 1); // absolute index version
+    m.add(executors.get(executor_index).boid.index + 1); // absolute index version
 
     //// normalized index version
     // dummy
@@ -201,7 +200,7 @@ class Flock {
     //  if ( i == executors.get(executor_index).boid.index) nonNull_index = nonNull_count;
     //  if (probs[i] > 0) nonNull_count++;
     //}
-    //m.add( (nonNull_index % pure_data_boids) + 1 );                    // normalized version
+    //m.add( nonNull_index + 1 );                    // normalized version
     //m.add(nonNull_count);
 
     // complete (keeps inot account the number of boid in gropus)
@@ -314,10 +313,10 @@ class Flock {
     int norm_index = -1;
     for (Cluster c : clusters){
       norm_index = c.boids_indexes.indexOf(boidIndex);
-      if ( norm_index > -1 ) return new int[] {(norm_index % max_pure_data_boids) + 1, c.boids_indexes.size()};
+      if ( norm_index > -1 ) return new int[] {norm_index + 1, c.boids_indexes.size()};
     }
     print("should never return this value");
-    return new int[] {(norm_index % max_pure_data_boids) + 1, 0};
+    return new int[] {norm_index + 1, 0};
   }
 
   //////////////////    group counter    /////////////////
