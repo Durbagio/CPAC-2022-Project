@@ -1,11 +1,10 @@
 // The Flock (a list of Boid objects) //<>//
 int N;
+int max_pure_data_boids = 10;
 
 class Flock {
   ArrayList<Boid> boids; // An ArrayList for all the boids
   ArrayList<ArrayList<Float>> distances;
-  int current_state;
-  int current_state2;
   int manual_boid_group;
   ArrayList<Cluster> clusters;
   ArrayList<Executor> executors;
@@ -19,9 +18,7 @@ class Flock {
     distances = new ArrayList<ArrayList<Float>>();
     deadBoids = new ArrayList<Boid>();
     clusters = new ArrayList<Cluster>();
-    //clusters.add(new Cluster(clusters.size())); // at lest one group
-    current_state = 0;
-    current_state2 = 0;
+    //clusters.add(new Cluster(clusters.size()));
     playing_executors = new ArrayList<Integer>();
     paused_executors = new ArrayList<Integer>();
     executors = new ArrayList<Executor>();
@@ -64,22 +61,11 @@ class Flock {
     }
 
     // clear dead boids
-    for (int i = N-1; i > 0; i--) {
+    for (int i = N-1; i >= 0; i--) {
       // leave at least one boid
       if (boids.get(i).life == 0 )  removeBoid(i);
     }
 
-    //render the playing boid...
-    //if (clock_active && boids.size()>0) {
-    //  stroke(#00ff00, 255);
-    //  fill(255, 0);
-    //  ellipse(boids.get(current_state).position.x, boids.get(current_state).position.y, 10, 10);
-    //}
-    //if (clock_2_active && boids.size()>0) {
-    //  stroke(#ffff00, 255);
-    //  fill(255, 0);
-    //  ellipse(boids.get(current_state2).position.x, boids.get(current_state2).position.y, 15, 15);
-    //}
     for ( int i : playing_executors ) if (executor_visualization)  executors.get(i).render();
 
     // group info visualization
@@ -123,7 +109,6 @@ class Flock {
     deadBoids.add(b);
   }
 
-  // todo: somewere treat the index changing and current_state
   synchronized void removeBoid(int index) {
     // check if it's playing and eventually change execution boid
     for ( Executor e : executors) if (boids.get(index).equals(e.boid)) force_execution_transition(e.number);
@@ -182,48 +167,45 @@ class Flock {
       probs[j] = values[j]/sum;
     }
 
-    //executors.get(executor_index).current_state = wchoose(probs);
-    //executors.get(executor_index).boid = boids.get(executors.get(executor_index).current_state);
-
+    // choose next boid
     executors.get(executor_index).boid = boids.get(wchoose(probs));
 
-    //if (executors.get(executor_index).current_state != executors.get(executor_index).boid.index ) {
-    //  println("current state" + executors.get(executor_index).current_state);
-    //  println("boid_state" + executors.get(executor_index).current_state);
-    //  pause();
-    //}
-
-    // format the state to facilitate PD state manage
-    // convert the index to normalize to the goup size
-    int nonNull_index = 0, nonNull_count = 0;
-    for (int i = 0; i < probs.length; i++) {
-      if ( i == executors.get(executor_index).current_state) nonNull_index = nonNull_count;
-      if (probs[i] > 0) nonNull_count++;
-    }
-
     // handle executors on the same boid
-    for ( int i = playing_executors.size()-1; i >=0 ; i--) {
+    for ( int i = playing_executors.size()-1; i >=0; i--) {
       int other_index = playing_executors.get(i);
       if (other_index != executor_index && playing_executors.contains(executor_index)) {
         // cycle through every other playng_executor the playing_executors index array
         if (executors.get(executor_index).boid.equals(executors.get(other_index).boid)) { // if two boids coincide
-        // retain the younger one (playing_executors is a kind of FIFO)
-          if (playing_executors.indexOf(executor_index) < playing_executors.indexOf(other_index)){ // executor_index is older
+          // retain the younger one (playing_executors is a kind of FIFO)
+          if (playing_executors.indexOf(executor_index) < playing_executors.indexOf(other_index)) { // executor_index is older
             println(playing_executors);
             println(executor_index);
             paused_executors.add(paused_executors.size(), playing_executors.remove(playing_executors.indexOf(executor_index))); // -> remove it
             m.add(0); // means this player has to stop
-            break;
-          }else{
+            //break;
+          } else {
             paused_executors.add(paused_executors.size(), playing_executors.remove(playing_executors.indexOf(other_index)));
           }
         }
       }
     }
+    
+    // add OSC message
+    
+    //m.add(executors.get(executor_index).boid.index + 1); // absolute index version
+    
+    //// normalized index version
+    // dummy
+    //int nonNull_index = 0, nonNull_count = 0;
+    //for (int i = 0; i < probs.length; i++) {
+    //  if ( i == executors.get(executor_index).boid.index) nonNull_index = nonNull_count;
+    //  if (probs[i] > 0) nonNull_count++;
+    //}
+    //m.add( (nonNull_index % pure_data_boids) + 1 );                    // normalized version
+    //m.add(nonNull_count);
 
-    //m.add( (nonNull_index % 10) + 1 );                    // normalized version
-    m.add(executors.get(executor_index).current_state + 1); // absolute version
-    m.add(nonNull_count);
+    // complete (keeps inot account the number of boid in gropus)
+    m.add(boid_index_inGroup(executors.get(executor_index).boid.index));
 
     return m;
   }
@@ -280,6 +262,14 @@ class Flock {
     // todo: capire se aggiungere un osc message, forse anche no
   }
 
+  public void clear_executors() {
+    playing_executors.clear();
+    paused_executors.clear();
+    for (int i = 0; i < max_number_executors; i++) {
+      paused_executors.add(i);
+    }
+  }
+
   // move all boids to a random position
   void randomize() {
     for ( Boid b : boids ) {
@@ -307,13 +297,6 @@ class Flock {
     }
   }
 
-  /*
-  void computeBPMMsg(OscMessage m) {
-   N = boids.size();
-   float BPM = 10 * N;
-   m.add(BPM);
-   }
-   */
 
   // find closest boid, but ensure is not the same
   public int find_closest_boid(PVector position) {
@@ -324,6 +307,17 @@ class Flock {
       if (distances[i] < distances[index_min] && distances[i] > 0) index_min = i;
     }
     return flock.boids.get(index_min).index;
+  }
+  
+  // return the normalized index of the boid in the group
+  int[] boid_index_inGroup(int boidIndex){
+    int norm_index = -1;
+    for (Cluster c : clusters){
+      norm_index = c.boids_indexes.indexOf(boidIndex);
+      if ( norm_index > -1 ) return new int[] {(norm_index % max_pure_data_boids) + 1, c.boids_indexes.size()};
+    }
+    print("should never return this value");
+    return new int[] {(norm_index % max_pure_data_boids) + 1, 0};
   }
 
   //////////////////    group counter    /////////////////
@@ -352,12 +346,6 @@ class Flock {
           //System.out.println();
         }
       }
-      // filter cluster list
-      //clusters.removeIf(new Predicate<Cluster>() {
-      //  boolean test(Cluster cluster) {
-      //    return cluster.boids_indexes.isEmpty();
-      //  }
-      //});
       for ( int i = clusters.size()-1; i >= 0; i--) {
         if ( clusters.get(i).boids_indexes.isEmpty()) clusters.remove(i);
       }
@@ -370,19 +358,6 @@ class Flock {
           // if executors are avaiables shift them to playng queue
           if (paused_executors.size() > 0 ) {
             playing_executors.add(playing_executors.size(), paused_executors.remove(0));
-
-            /////////////////debug
-            //println("playing_executors" + playing_executors.toString());
-            //println("paused_executors" + paused_executors.toString());
-            ////executors.get(playing_executors.get(0)).current_state = clusters.get(playing_executors.get(0)).get_random_index(); // da errore
-            //println(playing_executors.get(0)); // index of just added executor
-            //println(clusters.get(playing_executors.get(0)));
-            //for (Cluster g : clusters) {
-            //  println(g);
-            //}
-            //print( clusters.get(number_old_clusters + i).get_random_index() );
-            ////////////// end debug
-
             executors.get(playing_executors.get(playing_executors.size()-1)).boid = boids.get( clusters.get(number_old_clusters + i).get_random_index() );
           }
         }

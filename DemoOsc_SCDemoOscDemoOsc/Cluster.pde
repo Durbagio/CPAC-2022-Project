@@ -1,4 +1,4 @@
-// contains information about connected boids (cluster) and current playng boid in this boid system
+// contains information about connected boids (cluster)
 class Cluster {
 
   int group_number;

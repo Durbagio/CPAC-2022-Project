@@ -28,7 +28,7 @@ int timer = 0 ;
 
 int max_number_executors = 4;
 
-float thresh = 500.0;
+float thresh = 250.0;
 
 void setup() {
   size(1280, 720, P2D);
@@ -68,8 +68,8 @@ void draw() {
 
   if ( internal_clock && clock_active && (millis() - timer >= 1000)) {
     for ( int i = 0; i < flock.executors.size(); i++) {
-        if ( flock.playing_executors.contains(i) ) oscP5.send(flock.computeMarkovMsg(i), myRemoteLocation);
-      }
+      if ( flock.playing_executors.contains(i) ) oscP5.send(flock.computeMarkovMsg(i), myRemoteLocation);
+    }
     timer = millis();
   }
 }
@@ -100,11 +100,10 @@ void mousePressed() {
     //flock.addBoid(new Boid(mouseX, mouseY, group, c, t));
     //group++;
     clock_active = false;
-    flock.current_state = 0;
-    flock.current_state2 = 0;
     faceRecognitionActive = false;
     manual_control = false;
     multiObjectTrackingActive = false;
+    flock.clear_executors();
   }
 }
 
@@ -160,13 +159,22 @@ void keyPressed() {
     executor_visualization = !executor_visualization;
     break;
   case 'e':
-    group = max(200, group+1); // just set an offset to avoid interference with other boids 
-    Boid b2 = new Boid(group);
-    b2.is_fixed = true;
-    flock.addBoid(b2);
-    flock.current_state2 = flock.boids.size()-1;
+    if (flock.paused_executors.size() > 0 ) {
+      flock.playing_executors.add(flock.playing_executors.size(), flock.paused_executors.remove(0));
+      flock.executors.get(flock.playing_executors.get(flock.playing_executors.size()-1)).boid = flock.boids.get( flock.clusters.get(flock.clusters.size()-1).get_random_index() );
+    }
+    break;
+  case 'k': // kill all
+    synchronized(flock) {
+      flock.clear_executors();
+      for (int i = flock.boids.size()-1; i>=0; i--) {
+        flock.addDeadBoid(flock.boids.get(i).position);
+        flock.removeBoid(i);
+      }
+    }  
     break;
   }
+
 
   // keys that need iteration for each boids
   for (Boid b : flock.boids) {
@@ -182,11 +190,6 @@ void keyPressed() {
       break;
     case 's':
       b.maxforce = flock.boids.get(0).maxforce+0.008 * 0.3;
-      break;
-    case 'k': // kill
-      b.is_active = false;
-      clock_active = false;
-      flock.current_state = 0;
       break;
     }
   }
