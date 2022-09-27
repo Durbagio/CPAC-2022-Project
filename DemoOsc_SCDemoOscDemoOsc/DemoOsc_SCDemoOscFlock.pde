@@ -189,11 +189,11 @@ class Flock {
         }
       }
     }
-    
+
     // add OSC message
-    
+
     //m.add(executors.get(executor_index).boid.index + 1); // absolute index version
-    
+
     //// normalized index version
     // dummy
     //int nonNull_index = 0, nonNull_count = 0;
@@ -308,7 +308,7 @@ class Flock {
     }
     return flock.boids.get(index_min).index;
   }
-  
+
   // return the normalized index of the boid in the group
   int[] boid_index_inGroup(int boidIndex){
     int norm_index = -1;
