@@ -1,4 +1,4 @@
-#N canvas 155 85 1073 600 12;
+#N canvas 45 171 1073 600 12;
 #X obj 361 298 soundfiler;
 #X obj 379 92 loadbang;
 #X msg 378 240 set read -resize \$1 \$2-buffer;
@@ -9,11 +9,11 @@
 #X obj 379 114 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
 #000000 #000000;
 #X obj 388 156 random 7;
-#X msg 361 275 read -resize ./samples/gamelan/6.wav 1215-buffer;
+#X msg 361 275 read -resize ./samples/gamelan/3.wav 1368-buffer;
 #X msg 379 179 ./samples/gamelan/\$1.wav;
 #N canvas 9 29 1440 776 (subpatch) 0;
-#X array \$0-buffer 339968 float 2;
-#X coords 0 1 339968 -1 200 140 1 0 0;
+#X array \$0-buffer 170775 float 2;
+#X coords 0 1 170775 -1 200 140 1 0 0;
 #X restore 762 151 graph;
 #X obj 75 274 tabplay~ \$0-buffer;
 #X obj 75 130 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000
