@@ -7,7 +7,7 @@
 #X obj 600 202 pack s f;
 #X obj 556 39 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000
 #000000;
-#X msg 568 259 read -resize ./samples/gamelan/0.wav 1007-buffer;
+#X msg 568 259 read -resize ./samples/gamelan/0.wav 1068-buffer;
 #X msg 600 163 ./samples/gamelan/\$1.wav;
 #X obj 290 198 tabplay~ \$0-buffer;
 #X obj 290 54 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000
@@ -29,16 +29,19 @@
 #X obj 556 63 t b b, f 6;
 #X floatatom 110 125 3 0 10 0 - - \$0-samplenumber 0;
 #X text 137 125 sample;
-#N canvas 0 25 1440 776 (subpatch) 0;
-#X array \$0-buffer 170775 float 2;
-#X coords 0 1 170775 -1 200 140 1 0 0;
-#X restore 856 47 graph;
 #X obj 780 183 f \$0;
 #X obj 623 87 t b b;
 #X msg 623 111 0;
+#N canvas 224 224 1920 976 \$0-buffer 0;
+#N canvas 0 25 1440 776 (subpatch) 0;
+#X array \$0-buffer 170775 float 2;
+#X coords 0 1 170775 -1 200 140 1 0 0;
+#X restore 54 55 graph;
+#X restore 409 442 pd \$0-buffer;
+#X obj 824 30 inlet;
 #X connect 1 0 5 0;
 #X connect 2 0 6 0;
-#X connect 3 0 28 0;
+#X connect 3 0 27 0;
 #X connect 4 0 2 0;
 #X connect 5 0 24 0;
 #X connect 6 0 0 0;
@@ -63,9 +66,10 @@
 #X connect 23 0 6 0;
 #X connect 23 1 7 0;
 #X connect 24 0 6 0;
-#X connect 24 1 29 0;
-#X connect 28 0 4 1;
-#X connect 29 0 30 0;
-#X connect 29 1 3 0;
-#X connect 30 0 23 0;
+#X connect 24 1 28 0;
+#X connect 27 0 4 1;
+#X connect 28 0 29 0;
+#X connect 28 1 3 0;
+#X connect 29 0 23 0;
+#X connect 31 0 25 0;
 #X coords 0 -1 1 1 85 60 1 100 100;
