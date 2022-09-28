@@ -189,6 +189,7 @@ class Boid {
   void renderTarget() {
     stroke(#ff0000, 255*pow(life, 1));
     fill(#ff0000, 255*life);
+    strokeWeight(1.5);
     ellipse(target.x, target.y, r*2, r*2);
     if ( render_target == 2) {
       // kind of verbosity of the target printing
