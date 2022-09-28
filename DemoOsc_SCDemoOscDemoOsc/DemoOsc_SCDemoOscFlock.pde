@@ -1,4 +1,6 @@
-// The Flock (a list of Boid objects) //<>// //<>//
+import java.util.Arrays; //<>//
+
+// The Flock (a list of Boid objects) //<>//
 int N;
 int max_pure_data_boids = 10;
 
@@ -121,6 +123,7 @@ class Flock {
     }
     // shift indexes
     for (int i = index; i < boids.size(); i++) boids.get(i).index = i;
+    N = boids.size();
   }
 
   // old function: maitained for backward compatibility
@@ -151,61 +154,70 @@ class Flock {
 
   synchronized public OscMessage computeMarkovMsg(int executor_index) {
     OscMessage m = new OscMessage("/probability" + executor_index);
-    float[] probs = new float[boids.size()];
-    float[] values = new float[boids.size()];
-    float sum = 0;
-    float cont = 0;
-    for (int j = 0; j < N; j++) {
-      values[j] = (thresh - min(thresh, distances.get(executors.get(executor_index).boid.index).get(j)))/thresh;
-      if (values[j] > 0) cont++;
-    }
-    if (N > 1 && cont > 1) values[executors.get(executor_index).boid.index] = 0;
-    for (int j = 0; j < N; j++) {
-      sum = sum + values[j];
-    }
-    for (int j = 0; j < N; j++) {
-      probs[j] = values[j]/sum;
-    }
+    if (N > 0) {
+      if ( executors.get(executor_index).boid.index > N-1 ) {
+        println("FATAL ERRORRRRR");
+        print("old index: " + executors.get(executor_index).boid.index);
+        executors.get(executor_index).boid.index = int (random(0, N-1) );
+        println("new index" + executors.get(executor_index).boid.index);
+      }
+      float[] probs = new float[boids.size()];
+      float[] values = new float[boids.size()];
+      float sum = 0;
+      float cont = 0;
+      for (int j = 0; j < N; j++) {
+        values[j] = (thresh - min(thresh, distances.get(executors.get(executor_index).boid.index).get(j)))/thresh;
+        if (values[j] > 0) cont++;
+      }
+      if (N > 1 && cont > 1) values[executors.get(executor_index).boid.index] = 0;
+      for (int j = 0; j < N; j++) {
+        sum = sum + values[j];
+      }
+      for (int j = 0; j < N; j++) {
+        probs[j] = values[j]/sum;
+      }
 
-    // choose next boid
-    executors.get(executor_index).boid = boids.get(wchoose(probs));
+      // choose next boid
+      executors.get(executor_index).boid = boids.get(wchoose(probs));
 
-    // handle executors on the same boid
-    for ( int i = playing_executors.size()-1; i >=0; i--) {
-      int other_index = playing_executors.get(i);
-      if (other_index != executor_index && playing_executors.contains(executor_index)) {
-        // cycle through every other playng_executor the playing_executors index array
-        if (executors.get(executor_index).boid.equals(executors.get(other_index).boid)) { // if two boids coincide
-          // retain the younger one (playing_executors is a kind of FIFO)
-          if (playing_executors.indexOf(executor_index) < playing_executors.indexOf(other_index)) { // executor_index is older
-            println(playing_executors);
-            println(executor_index);
-            paused_executors.add(paused_executors.size(), playing_executors.remove(playing_executors.indexOf(executor_index))); // -> remove it
-            m.add(0); // means this player has to stop
-            //break;
-          } else {
-            paused_executors.add(paused_executors.size(), playing_executors.remove(playing_executors.indexOf(other_index)));
+      // handle executors on the same boid
+      for ( int i = playing_executors.size()-1; i >=0; i--) {
+        int other_index = playing_executors.get(i);
+        if (other_index != executor_index && playing_executors.contains(executor_index)) {
+          // cycle through every other playng_executor the playing_executors index array
+          if (executors.get(executor_index).boid.equals(executors.get(other_index).boid)) { // if two boids coincide
+            // retain the younger one (playing_executors is a kind of FIFO)
+            if (playing_executors.indexOf(executor_index) < playing_executors.indexOf(other_index)) { // executor_index is older
+              println(playing_executors);
+              println(executor_index);
+              paused_executors.add(paused_executors.size(), playing_executors.remove(playing_executors.indexOf(executor_index))); // -> remove it
+              m.add(0); // means this player has to stop
+              //break;
+            } else {
+              paused_executors.add(paused_executors.size(), playing_executors.remove(playing_executors.indexOf(other_index)));
+            }
           }
         }
       }
+
+      // add OSC message
+      m.add(executors.get(executor_index).boid.index + 1); // absolute index version
+
+      //// normalized index version
+      // dummy
+      //int nonNull_index = 0, nonNull_count = 0;
+      //for (int i = 0; i < probs.length; i++) {
+      //  if ( i == executors.get(executor_index).boid.index) nonNull_index = nonNull_count;
+      //  if (probs[i] > 0) nonNull_count++;
+      //}
+      //m.add( nonNull_index + 1 );                    // normalized version
+      //m.add(nonNull_count);
+
+      // complete (keeps inot account the number of boid in gropus)
+      m.add(boid_index_inGroup(executors.get(executor_index).boid.index));
+
+      executors.get(executor_index).maxLife();
     }
-    
-    // add OSC message
-    m.add(executors.get(executor_index).boid.index + 1); // absolute index version
-
-    //// normalized index version
-    // dummy
-    //int nonNull_index = 0, nonNull_count = 0;
-    //for (int i = 0; i < probs.length; i++) {
-    //  if ( i == executors.get(executor_index).boid.index) nonNull_index = nonNull_count;
-    //  if (probs[i] > 0) nonNull_count++;
-    //}
-    //m.add( nonNull_index + 1 );                    // normalized version
-    //m.add(nonNull_count);
-
-    // complete (keeps inot account the number of boid in gropus)
-    m.add(boid_index_inGroup(executors.get(executor_index).boid.index));
-
     return m;
   }
 
@@ -305,13 +317,14 @@ class Flock {
       distances[i] = PVector.dist(flock.boids.get(i).position, position);
       if (distances[i] < distances[index_min] && distances[i] > 0) index_min = i;
     }
+    if ( flock.boids.size() == 0 ) return -1; // not present
     return flock.boids.get(index_min).index;
   }
 
   // return the normalized index of the boid in the group
-  int[] boid_index_inGroup(int boidIndex){
+  int[] boid_index_inGroup(int boidIndex) {
     int norm_index = -1;
-    for (Cluster c : clusters){
+    for (Cluster c : clusters) {
       norm_index = c.boids_indexes.indexOf(boidIndex);
       if ( norm_index > -1 ) return new int[] {norm_index + 1, c.boids_indexes.size()};
     }
@@ -321,47 +334,46 @@ class Flock {
 
   //////////////////    group counter    /////////////////
   public void connectedComponents() {
-    if ( N > 1 ) {
-      text = "";
-      // Mark all the vertices as not visited
-      N = flock.boids.size();
-      boolean[] visited = new boolean[N];
-      int group_count = -1;
-      int number_old_clusters = clusters.size();
-      for ( Cluster c : clusters) {
-        c.boids_indexes.clear();
-      }
-      for (int v = 0; v < N; ++v) {
-        if (!visited[v]) {
-          // print all reachable vertices
-          // from v
-          group_count++;
-          if ( clusters.size() <= group_count ) {
-            clusters.add(new Cluster(clusters.size()));
-          }
-          text = text + "group " + group_count + ": ";
-          DFSUtil(v, visited, group_count);
-          text = text + "\n";
-          //System.out.println();
+    text = "";
+    // Mark all the vertices as not visited
+    N = flock.boids.size();
+    boolean[] visited = new boolean[N];
+    int group_count = -1;
+    int number_old_clusters = clusters.size();
+    for ( Cluster c : clusters) {
+      c.boids_indexes.clear();
+    }
+    for (int v = 0; v < N; ++v) {
+      if (!visited[v]) {
+        // print all reachable vertices
+        // from v
+        group_count++;
+        if ( clusters.size() <= group_count ) {
+          clusters.add(new Cluster(clusters.size()));
         }
+        text = text + "group " + group_count + ": ";
+        DFSUtil(v, visited, group_count);
+        text = text + "\n";
+        //System.out.println();
       }
-      for ( int i = clusters.size()-1; i >= 0; i--) {
-        if ( clusters.get(i).boids_indexes.isEmpty()) clusters.remove(i);
-      }
+    }
+    for ( int i = clusters.size()-1; i >= 0; i--) {
+      if ( clusters.get(i).boids_indexes.isEmpty()) clusters.remove(i);
+    }
 
-      int number_new_cluster =  clusters.size() - number_old_clusters;
-      if (number_new_cluster > 0) { // cluster increase
-        //println("group_count" + group_count);
-        for (int i = 0; i < number_new_cluster; i++) {
-          //print(i);
-          // if executors are avaiables shift them to playng queue
-          if (paused_executors.size() > 0 ) {
-            playing_executors.add(playing_executors.size(), paused_executors.remove(0));
-            executors.get(playing_executors.get(playing_executors.size()-1)).boid = boids.get( clusters.get(number_old_clusters + i).get_random_index() );
-          }
-        }
-        text = text + playing_executors.toString();
+    int number_new_cluster =  clusters.size() - number_old_clusters;
+    if (number_new_cluster > 0) { // cluster increase
+      //println("group_count" + group_count);
+      for (int i = 0; i < number_new_cluster; i++) {
+        //print(i);
+        // if executors are avaiables shift them to playng queue
+        add_executor();
+        //if (paused_executors.size() > 0 ) {
+        //  playing_executors.add(playing_executors.size(), paused_executors.remove(0));
+        //  executors.get(playing_executors.get(playing_executors.size()-1)).boid = boids.get( clusters.get(number_old_clusters + i).get_random_index() );
+        //}
       }
+      text = text + playing_executors.toString();
     }
   }
 
@@ -383,6 +395,32 @@ class Flock {
       }
     }
   }
+
+  // move one executor if avaiable from paused to playing state 
+  public void add_executor() {
+    if (paused_executors.size() > 0 && N > 0 ) {
+      // for each playng executors -> find playng group -> remove from cluster list
+      ArrayList<Integer> cluster_withO_executors = new ArrayList<Integer>();
+      for ( int i = 0; i < clusters.size(); i++ ) {
+        cluster_withO_executors.add(i);
+      }
+      for (int i : playing_executors) {
+      outerloop:
+        for ( Cluster c : clusters) {
+          if ( c.boids_indexes.indexOf(executors.get(i).boid.index) > -1 ) {
+            // this cluster has at least one executor
+            int index_to_remove = cluster_withO_executors.indexOf(c.group_number);
+            if ( index_to_remove > -1 ) cluster_withO_executors.remove(index_to_remove);
+            break outerloop;
+          }
+        }
+      }
+      // -> crate executor in that group
+      playing_executors.add(playing_executors.size(), paused_executors.remove(0));
+      // get one random cluster that has not an executor and put an executor on one of its boids
+      executors.get(playing_executors.get(playing_executors.size()-1)).boid = boids.get( clusters.get(cluster_withO_executors.get(int(random(-0.5,cluster_withO_executors.size()-0.5)))).get_random_index() );
+    }
+  }
 }
 
 ///////// Additional functions
@@ -398,7 +436,8 @@ public int wchoose(float[] probs) {
     }
   }
   // this should never be reached
-  print("WARNING: check the probability distribution vector (must be < 1)");
+  println("WARNING: check the probability distribution vector (must be < 1)");
+  println(probs);
   return -1;
 }
 

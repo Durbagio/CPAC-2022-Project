@@ -114,12 +114,18 @@ void keyPressed() {
     break;
   case 'z': // kill a specific boid
     int index = flock.find_closest_boid(new PVector(mouseX, mouseY));
-    flock.addDeadBoid(flock.boids.get(index).position);
-    flock.removeBoid(index);
+    if (index > -1) {
+      flock.addDeadBoid(flock.boids.get(index).position);
+      flock.removeBoid(index);
+    }
+    if ( N == 0 ) flock.clear_executors();
     break;
   case 'm': // manual control (drag boid)
-    flock.manual_boid_group = flock.find_closest_boid(new PVector(mouseX, mouseY));
-    manual_control = !manual_control;
+    index = flock.find_closest_boid(new PVector(mouseX, mouseY));
+    if (index > -1) {
+      flock.manual_boid_group = index;
+      manual_control = !manual_control;
+    }
     break;
   case 'r':
     flock.randomize();
@@ -132,11 +138,17 @@ void keyPressed() {
     break;
   case 'p':
     print("\n\n");
-    print("\nmax force: ", flock.boids.get(0).maxforce);
-    print("\nmaxspeed:  ", flock.boids.get(0).maxspeed);
+    if ( flock.boids.size() > 0) {
+      print("\nflocksize: ", flock.boids.size());
+      print("\nmax force: ", flock.boids.get(0).maxforce);
+      print("\nmaxspeed:  ", flock.boids.get(0).maxspeed);
+    } else {
+      print("empyty flock");
+    }
+    print("\npaying_executors:  ", flock.playing_executors);
+    print("\npaused_executors:  ", flock.paused_executors);
     print("\nmanual  :  ", manual_control);
     print("\nframerate: ", frameRate);
-    print("\nflocksize: ", flock.boids.size());
     print("\n");
     //looping = !looping; // (un)freeze the execution
     delay(1000);
@@ -159,10 +171,11 @@ void keyPressed() {
     executor_visualization = !executor_visualization;
     break;
   case 'e':
-    if (flock.paused_executors.size() > 0 ) {
-      flock.playing_executors.add(flock.playing_executors.size(), flock.paused_executors.remove(0));
-      flock.executors.get(flock.playing_executors.get(flock.playing_executors.size()-1)).boid = flock.boids.get( flock.clusters.get(flock.clusters.size()-1).get_random_index() );
-    }
+     flock.add_executor();
+    //if (flock.paused_executors.size() > 0 && N > 0) {
+    //  flock.playing_executors.add(flock.playing_executors.size(), flock.paused_executors.remove(0));
+    //  flock.executors.get(flock.playing_executors.get(flock.playing_executors.size()-1)).boid = flock.boids.get( flock.clusters.get(flock.clusters.size()-1).get_random_index() );
+    //}
     break;
   case 'k': // kill all
     synchronized(flock) {
@@ -171,7 +184,7 @@ void keyPressed() {
         flock.addDeadBoid(flock.boids.get(i).position);
         flock.removeBoid(i);
       }
-    }  
+    }
     break;
   }
 
