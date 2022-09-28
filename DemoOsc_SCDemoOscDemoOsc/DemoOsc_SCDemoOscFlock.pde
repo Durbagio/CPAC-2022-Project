@@ -121,6 +121,7 @@ class Flock {
     }
     // shift indexes
     for (int i = index; i < boids.size(); i++) boids.get(i).index = i;
+    N = boids.size();
   }
 
   // old function: maitained for backward compatibility
@@ -151,6 +152,12 @@ class Flock {
 
   synchronized public OscMessage computeMarkovMsg(int executor_index) {
     OscMessage m = new OscMessage("/probability" + executor_index);
+    if ( executors.get(executor_index).boid.index > N-1){
+      println("FATAL ERRORRRRR");
+      print("old index: " + executors.get(executor_index).boid.index);
+      executors.get(executor_index).boid.index = int (random(0,N-1) );
+      println("new index" + executors.get(executor_index).boid.index);
+    }
     float[] probs = new float[boids.size()];
     float[] values = new float[boids.size()];
     float sum = 0;
@@ -205,6 +212,8 @@ class Flock {
 
     // complete (keeps inot account the number of boid in gropus)
     m.add(boid_index_inGroup(executors.get(executor_index).boid.index));
+    
+    executors.get(executor_index).maxLife();
 
     return m;
   }
@@ -398,7 +407,8 @@ public int wchoose(float[] probs) {
     }
   }
   // this should never be reached
-  print("WARNING: check the probability distribution vector (must be < 1)");
+  println("WARNING: check the probability distribution vector (must be < 1)");
+  println(probs);
   return -1;
 }
 

@@ -46,10 +46,11 @@ video_downscale = 1 # default does not resize image
 video_path = './video examples/PETS09-S2L1-raw.webm'
 # video_path = './video examples/PETS09-S2L2-raw.webm'
 # video_path = './video examples/AVG-TownCentre-raw.webm'
+# video_path = './video examples/MOT20-03-raw.webm'
 # video_path = './video examples/MOT20-06-raw.webm'
 # video_path = '' # uncomment to activate webcam input
 # video_path = "https://www.youtube.com/watch?v=1-iS7LArMPA" # NY
-# video_path = "https://www.youtube.com/watch?v=z4WeAR7tctA" # NY live walking
+# video_path = "https://www.youtube.com/watch?v=y0o2aSdBeQQ" # manhattan
 # video_path = "https://www.youtube.com/watch?v=h1wly909BYw"; video_downscale = 0.5 # Petersburg - ok
 # video_path = "https://www.youtube.com/watch?v=PGrq-2mju2s" # time square
 
@@ -158,7 +159,7 @@ def osc_message_boid(track):
 
 def run(video_path: str = video_path, detect_labels = ["person"],
         video_downscale: float = video_downscale,
-        architecture: str = 'fasterrcnnMob',
+        architecture: str = 'fasterrcnnMob', # # fasterrcnn
         confidence_threshold: float = 0.7,
         tracker_min_iou: float = 0.35,
         show_detections: bool = True,
@@ -214,7 +215,7 @@ def run(video_path: str = video_path, detect_labels = ["person"],
         # frame = frame[round(imgHeight*0.5):round(imgHeight), round(imgWidth*0.25):round(imgWidth*0.75)] # crop image
 
         if not ret:
-            client.send_message('/multi_tracker_off')
+            client.send_message('/multi_tracker_off',0)
             break
 
         # frame = cv2.resize(frame, fx=video_downscale, fy=video_downscale, dsize=None, interpolation=cv2.INTER_AREA)
@@ -267,7 +268,7 @@ def run(video_path: str = video_path, detect_labels = ["person"],
         cv2.imshow('frame', frame)
         c = cv2.waitKey(viz_wait_ms)
         if c == ord('q'):
-            client.send_message('/multi_tracker_off')
+            client.send_message('/multi_tracker_off',0)
             break
     
 
