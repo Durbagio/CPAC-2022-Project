@@ -1,0 +1,4 @@
+do2 sol2 la#2 do3 re3 mib3 re3 mib3;
+la#1 fa2 la#2 do2 re3 mib3 re3 mib3;
+sol#1 re#2 sol2 sol#2 la#2 do3 re3 mib3;
+la#1 sol#1 sol#2 la#2 sol#2 mib3 re3 mib3;
