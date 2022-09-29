@@ -158,7 +158,6 @@ class Flock {
     OscMessage m = new OscMessage("/probability" + executor_index);
     if (N > 0) {
       if ( executors.get(executor_index).boid.index > N-1 ) {
-        println("FATAL ERRORRRRR");
         print("old index: " + executors.get(executor_index).boid.index);
         executors.get(executor_index).boid.index = int (random(0, N-1) );
         println("new index" + executors.get(executor_index).boid.index);
@@ -330,7 +329,7 @@ class Flock {
       norm_index = c.boids_indexes.indexOf(boidIndex);
       if ( norm_index > -1 ) return new int[] {norm_index + 1, c.boids_indexes.size()};
     }
-    print("should never return this value");
+    //print("should never return this value");
     return new int[] {norm_index + 1, 0};
   }
 
@@ -439,7 +438,7 @@ public int wchoose(float[] probs) {
     }
   }
   // this should never be reached
-  println("WARNING: check the probability distribution vector (must be < 1)");
+  //println("WARNING: check the probability distribution vector (must be < 1)");
   println(probs);
   return -1;
 }
