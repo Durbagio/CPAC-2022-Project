@@ -1,4 +1,4 @@
-# Social Constellation
+# SOCIAL CONSTELLATION
 
 <p align="center">
   <img src="https://user-images.githubusercontent.com/64915668/193022043-f95c622a-ce61-4a29-97bb-d543093f3066.png">
@@ -26,7 +26,7 @@ The way you move and interact with other people will evolve on time, modulating 
 
 ## HOW TO USE
 
-### keyboard commands for developing
+### Keyboard commands for developing in Processing
 - t (target) cycle throw target visulazation of each boid
 - f (fixed) add a fixed boid
 - c (clock) start internal clock
@@ -37,28 +37,33 @@ The way you move and interact with other people will evolve on time, modulating 
 - z kill nearest boid
 - i (info) toggle groups info visualization
 - g (and h) decrease (and increase) threshold
-
-
 - left click: add bunch of boids
 - right click: delete all boids
-
-other commands:
 - r randomize boid location
 - p (print and pause) print some useful variables
 - x (double draw) draw each line two times
 - w (and q) increase (decrease) maxspeed
 - s (and a) increase (decrease) maxforce
 
-
---------------------------------------
-example of usage (to manually create two groups of execution):
-- open
+### Example of usage (manually create two groups of execution):
+- open Processing and run the code
 - right click
 - position some fixed boids with f (e.g. on the left of the screen)
 - start clock with c
+- start Pure Data to start hear sound
 - add other boids far away with f
+- press t two times and m to move boids
+- try to connect those groups
 
-- press t two times and m to move boids, and maybe connect those gropus
+Example of usage (feed Processing with sample video data):
+- open Processing and run the code
+- right click
+- position some fixed boids with f (e.g. on the left of the screen)
+- start clock with c
+- start Pure Data to start hear sound
+- add other boids far away with f
+- press t two times and m to move boids
+- try to connect those groups
 
 -------------------------------------
 ### osc message
