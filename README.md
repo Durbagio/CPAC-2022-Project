@@ -56,7 +56,7 @@ note: if useful we could introduce after current_state, the length N of the arra
 -------------------------------------
 
 ### Example of usage (manually create two groups of execution):
-- open Processing and run the code
+- open the Processing script and run it
 - right click
 - position some fixed boids with f (e.g. on the left of the screen)
 - start clock with c
@@ -66,6 +66,11 @@ note: if useful we could introduce after current_state, the length N of the arra
 - try to connect those groups
 
 ### Example of usage (feed Processing with video stream data):
-- open Python, select the video source and run the code
-- open Processing and run the code
+- open the Python script, select the video source:
+```
+# video_path = './video examples/MOT20-06-raw.webm'
+# video_path = '' # uncomment to activate webcam input
+```
+- run the Python script
+- open the Processing script and run it
 - start Pure Data to start hear sound
