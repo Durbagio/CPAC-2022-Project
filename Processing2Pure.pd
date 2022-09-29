@@ -1,4 +1,4 @@
-#N canvas 39 178 740 300 12;
+#N canvas 126 240 740 300 12;
 #X obj 24 24 udpreceive 57120;
 #X obj 25 2 inlet;
 #X obj 24 78 unpackOSC /probability0;

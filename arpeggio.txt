@@ -1,0 +1,9 @@
+do3 sib3 re4 mib4 sol4;
+mib3 lab3 re4 mib4 lab4;
+fa3 sib3 fa4 mib4 sib4 ;
+mib3 sol3 re4 mib4 mib4;
+lab3 mib3 re4 mib4 lab4;
+do3 do3 do3 do4 do3;
+sib3 sib3 sib3 sib3 sib3;
+mib3 mib3 mib3 mib4 sib3;
+

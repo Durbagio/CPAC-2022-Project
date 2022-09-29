@@ -1,4 +1,4 @@
-#N canvas 659 42 480 338 12;
+#N canvas 220 66 1920 976 12;
 #X obj 13 204 hradio 15 1 0 16 empty empty empty 0 -8 0 10 #fcfcfc
 #000000 #000000 0;
 #X obj 13 243 trigger f f;
@@ -37,22 +37,24 @@
 #X obj 91 173 outlet;
 #N canvas 0 50 450 250 (subpatch) 0;
 #X array \$0-perc 16 float 3;
-#A 0 1 0.2 0.4 0.56 0.76 0.2 0.14 0.54 1 0.22 0.78 0.64 0.78 0.84 0.66
-0.84;
+#A 0 1 1 1 0 0 0 0 0 1 0 0 0 0 0 0 0;
 #X coords 0 1 16 0 200 50 1 0 0;
 #X restore 261 274 graph;
 #X obj 262 32 inlet;
 #X obj 13 221 array get \$0-perc;
 #X obj 262 237 array set \$0-perc;
 #X obj 13 305 outlet;
-#X obj 123 8 inlet;
 #X obj 13 34 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc #000000
 #000000;
 #X obj 103 46 r pulse;
 #X text 140 173 jump;
 #X text 303 32 rhythm;
-#X text 164 8 length;
 #X text 52 11 start;
+#X obj 160 6 r randLengthBang;
+#X obj 160 30 random 16;
+#X obj 160 54 + 1;
+#X obj 167 96 r defLengthBang;
+#X msg 167 120 16;
 #X connect 0 0 14 0;
 #X connect 1 0 2 0;
 #X connect 1 1 3 0;
@@ -61,7 +63,7 @@
 #X connect 4 0 0 0;
 #X connect 4 0 10 0;
 #X connect 5 0 4 0;
-#X connect 6 0 18 0;
+#X connect 6 0 17 0;
 #X connect 7 0 8 0;
 #X connect 8 0 11 0;
 #X connect 8 0 5 0;
@@ -69,6 +71,10 @@
 #X connect 10 0 9 0;
 #X connect 13 0 15 0;
 #X connect 14 0 1 0;
-#X connect 17 0 9 1;
-#X connect 18 0 5 0;
-#X connect 19 0 4 1;
+#X connect 17 0 5 0;
+#X connect 18 0 4 1;
+#X connect 22 0 23 0;
+#X connect 23 0 24 0;
+#X connect 24 0 9 1;
+#X connect 25 0 26 0;
+#X connect 26 0 9 1;
