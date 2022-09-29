@@ -1,2 +1,0 @@
-do2 sib2 re3 mib3 sol3;
-do2 sib2;
