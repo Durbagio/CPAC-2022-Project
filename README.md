@@ -5,7 +5,7 @@
 </p>
 
 <p class="text-justify"><The global pandemic created big issues for everyone, both physically and mentally. We are still struggling against the drawbacks of social distancing that magnifies the digital infrastructure and cultural divide of our society, lowering of empathy levels and leading to creative blocks and mental stress. We developed the concept of our project around this phenomena, trying not to underline difficulties but showing how much digitalization and technology could help by encouraging positive and creative thinking using the power of the collectivity.
-We want people to feel the power of being a collective rather than a multitude of singles and showing them the whole is the result of the behaviour of each one.</p>
+We want people to feel the power of being a collective rather than a multitude of singles and showing them the whole is the result of the behaviour of each one.></p>
 
 
 [**PRESENTATION**](https://docs.google.com/presentation/d/1Ks5NzHHrDXpIAf_jLT3ydBJz5u7t9odyt5QjDM_n0lg/edit?usp=sharing)
