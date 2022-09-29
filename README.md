@@ -1,7 +1,9 @@
 # Social Constellation
+
 <p align="center">
-  [image](https://user-images.githubusercontent.com/64915668/193022043-f95c622a-ce61-4a29-97bb-d543093f3066.png)
+  <img src="https://user-images.githubusercontent.com/64915668/193022043-f95c622a-ce61-4a29-97bb-d543093f3066.png">
 </p>
+
 The global pandemic created big issues for everyone, both physically and mentally. We are still struggling against the drawbacks of social distancing that magnifies the digital infrastructure and cultural divide of our society, lowering of empathy levels and leading to creative blocks and mental stress. We developed the concept of our project around this phenomena, trying not to underline difficulties but showing how much digitalization and technology could help by encouraging positive and creative thinking using the power of the collectivity.
 We want people to feel the power of being a collective rather than a multitude of singles and showing them the whole is the result of the behaviour of each one.
 
@@ -13,7 +15,7 @@ We want people to feel the power of being a collective rather than a multitude o
 - **AUDIO AND VISUAL ARE AFFECTED BY PEOPLE MOTION**
 
 <p align="center">
-  [image](https://user-images.githubusercontent.com/64915668/193021653-3b00ae53-b760-481d-b123-2643b4616a16.png)
+  <img src="https://user-images.githubusercontent.com/64915668/193021653-3b00ae53-b760-481d-b123-2643b4616a16.png">
 </p>
 
 The way you move and interact with other people will evolve on time, modulating the laser projection on the ceiling which represents a star field. The idea is to represent the effects of the collective behaviour of different clusters of people that move in the field differently. This is both a conceptual art installation and music instrument as everyone is affecting the overall result with his/her motion, encouraging people to cooperate and create unique visual and music pieces.
