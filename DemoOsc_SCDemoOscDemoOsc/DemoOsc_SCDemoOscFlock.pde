@@ -71,12 +71,14 @@ class Flock {
     for ( int i : playing_executors ) if (executor_visualization)  executors.get(i).render();
 
     // group info visualization
-    fill(255);
-    textSize(50);
-    text(count_connected_groups(distances), 10, 50);
-    textSize(30);
     connectedComponents();
-    text(text, 10, 80);
+    if ( screen_print ) {
+      fill(255);
+      textSize(50);
+      text(count_connected_groups(distances), 10, 50);
+      textSize(30);
+      text(text, 10, 80);
+    }
     //printArray(groups);
     //for (Cluster g : clusters) {
     //  println(g);
@@ -419,7 +421,7 @@ class Flock {
       playing_executors.add(playing_executors.size(), paused_executors.remove(0));
       if ( cluster_withO_executors.isEmpty() ) cluster_withO_executors.add( int(random(-0.49, clusters.size()-0.49)) );
       // get one random cluster that has not an executor and put an executor on one of its boids
-      executors.get(playing_executors.get(playing_executors.size()-1)).boid = boids.get( clusters.get(cluster_withO_executors.get(int(random(-0.49,cluster_withO_executors.size()-0.49)))).get_random_index() );
+      executors.get(playing_executors.get(playing_executors.size()-1)).boid = boids.get( clusters.get(cluster_withO_executors.get(int(random(-0.49, cluster_withO_executors.size()-0.49)))).get_random_index() );
     }
   }
 }
