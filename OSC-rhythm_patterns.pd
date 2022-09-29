@@ -195,7 +195,6 @@
 #X obj 1279 1053 rh_pattern, f 26;
 #X obj 1322 1185 rh_pattern, f 26;
 #X obj 1359 1295 rh_pattern, f 26;
-#X obj 1072 -48 metro 20000;
 #X obj 1073 -21 s randLengthBang;
 #X obj 1221 -26 s defLengthBang;
 #X obj 1221 -53 bng 15 250 50 0 empty empty empty 17 7 0 10 #fcfcfc
@@ -204,6 +203,7 @@
 #000000 0 1;
 #X obj 276 547 loadbang;
 #X msg 276 571 0;
+#X obj 1072 -48 metro 10000;
 #X connect 0 0 7 0;
 #X connect 0 0 34 0;
 #X connect 1 0 7 1;
@@ -379,8 +379,8 @@
 #X connect 141 1 106 0;
 #X connect 142 0 97 0;
 #X connect 142 1 107 0;
-#X connect 143 0 144 0;
-#X connect 146 0 145 0;
-#X connect 147 0 143 0;
-#X connect 148 0 149 0;
-#X connect 149 0 19 0;
+#X connect 145 0 144 0;
+#X connect 146 0 149 0;
+#X connect 147 0 148 0;
+#X connect 148 0 19 0;
+#X connect 149 0 143 0;
