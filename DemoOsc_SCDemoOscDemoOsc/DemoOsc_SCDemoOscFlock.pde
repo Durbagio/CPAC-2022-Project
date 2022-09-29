@@ -417,8 +417,9 @@ class Flock {
       }
       // -> crate executor in that group
       playing_executors.add(playing_executors.size(), paused_executors.remove(0));
+      if ( cluster_withO_executors.isEmpty() ) cluster_withO_executors.add( int(random(-0.49, clusters.size()-0.49)) );
       // get one random cluster that has not an executor and put an executor on one of its boids
-      executors.get(playing_executors.get(playing_executors.size()-1)).boid = boids.get( clusters.get(cluster_withO_executors.get(int(random(-0.5,cluster_withO_executors.size()-0.5)))).get_random_index() );
+      executors.get(playing_executors.get(playing_executors.size()-1)).boid = boids.get( clusters.get(cluster_withO_executors.get(int(random(-0.49,cluster_withO_executors.size()-0.49)))).get_random_index() );
     }
   }
 }

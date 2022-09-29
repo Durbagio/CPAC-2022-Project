@@ -24,7 +24,7 @@ int render_target = 0;
 boolean clock_active = false;
 boolean internal_clock = true;
 boolean executor_visualization = true;
-int timer = 0 ; 
+int timer = 0 ;
 
 int max_number_executors = 4;
 
@@ -186,6 +186,13 @@ void keyPressed() {
       }
     }
     break;
+  case 'h':
+    thresh += 30;
+    break;
+  case 'g':
+    thresh = max( thresh-30, 50);
+    break;
+      
   }
 
 
