@@ -18,6 +18,7 @@ boolean faceRecognitionActive = false;
 boolean multiObjectTrackingActive = false;
 boolean manual_control = false;
 boolean double_draw = false;
+boolean screen_print = true;
 int render_target = 0;
 
 // moving boids playing 60 bpm: simulate pure data /clock message
@@ -171,7 +172,7 @@ void keyPressed() {
     executor_visualization = !executor_visualization;
     break;
   case 'e':
-     flock.add_executor();
+    flock.add_executor();
     //if (flock.paused_executors.size() > 0 && N > 0) {
     //  flock.playing_executors.add(flock.playing_executors.size(), flock.paused_executors.remove(0));
     //  flock.executors.get(flock.playing_executors.get(flock.playing_executors.size()-1)).boid = flock.boids.get( flock.clusters.get(flock.clusters.size()-1).get_random_index() );
@@ -192,7 +193,9 @@ void keyPressed() {
   case 'g':
     thresh = max( thresh-30, 50);
     break;
-      
+  case 'i':
+    screen_print = ! screen_print;
+    break;
   }
 
 
