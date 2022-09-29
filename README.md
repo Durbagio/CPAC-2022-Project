@@ -11,7 +11,7 @@ We want people to feel the power of being a collective rather than a multitude o
 
 ## THE EXPERIENCE
 
-- **MINIMAL EVENT SCORE:YOU ARE FREE TO MOVE**
+- **MINIMAL EVENT SCORE: YOU ARE FREE TO MOVE**
 - **AUDIO AND VISUAL ARE AFFECTED BY PEOPLE MOTION**
 
 <p align="center">
@@ -53,6 +53,8 @@ The way you move and interact with other people will evolve on time, modulating 
 current state is the index of the boid selected (by processing) according to the probability distribution, that is anyway forwarded to puredata
 note: if useful we could introduce after current_state, the length N of the array that is passed
 
+-------------------------------------
+
 ### Example of usage (manually create two groups of execution):
 - open Processing and run the code
 - right click
@@ -63,12 +65,7 @@ note: if useful we could introduce after current_state, the length N of the arra
 - press t two times and m to move boids
 - try to connect those groups
 
-### Example of usage (feed Processing with sample video data):
+### Example of usage (feed Processing with video stream data):
+- open Python, select the video source and run the code
 - open Processing and run the code
-- right click
-- position some fixed boids with f (e.g. on the left of the screen)
-- start clock with c
 - start Pure Data to start hear sound
-- add other boids far away with f
-- press t two times and m to move boids
-- try to connect those groups
