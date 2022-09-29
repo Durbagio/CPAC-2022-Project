@@ -45,6 +45,14 @@ The way you move and interact with other people will evolve on time, modulating 
 - w (and q) increase (decrease) maxspeed
 - s (and a) increase (decrease) maxforce
 
+-------------------------------------
+### osc message debug
+/probability
+[current_state, prob1, prob2, prob3, .... probN]
+
+current state is the index of the boid selected (by processing) according to the probability distribution, that is anyway forwarded to puredata
+note: if useful we could introduce after current_state, the length N of the array that is passed
+
 ### Example of usage (manually create two groups of execution):
 - open Processing and run the code
 - right click
@@ -55,7 +63,7 @@ The way you move and interact with other people will evolve on time, modulating 
 - press t two times and m to move boids
 - try to connect those groups
 
-Example of usage (feed Processing with sample video data):
+### Example of usage (feed Processing with sample video data):
 - open Processing and run the code
 - right click
 - position some fixed boids with f (e.g. on the left of the screen)
@@ -64,11 +72,3 @@ Example of usage (feed Processing with sample video data):
 - add other boids far away with f
 - press t two times and m to move boids
 - try to connect those groups
-
--------------------------------------
-### osc message
-/probability
-[current_state, prob1, prob2, prob3, .... probN]
-
-current state is the index of the boid selected (by processing) according to the probability distribution, that is anyway forwarded to puredata
-note: if useful we could introduce after current_state, the length N of the array that is passed
